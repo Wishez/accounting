@@ -1,9 +1,14 @@
 const get = require('lodash/get')
+const verifyToken = require('./datasources/auth').verifyToken
 
 module.exports = async ({ req }) => {
-    const accessToken = get(req.cookies, 'access_token')
-    // const validateTokenResponse = await 
-    if (accessToken) return { user: null }
-    // get User from DB
-    return {}
+    const accessToken = get(req.cookies, 'access_token') || get(req.headers, 'authorization', '').split(' ')[1]
+    const validateTokenResponse = accessToken ? await verifyToken(accessToken) : {}
+    const { email, detail } = validateTokenResponse
+    const isAuth = Boolean(email)
+    return { 
+        message: isAuth ? null : detail,
+        isAuth,
+        email,
+    }
 }

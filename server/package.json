@@ -9,12 +9,14 @@
     "start:ci": "node src/app.js"
   },
   "dependencies": {
+    "apollo-datasource-rest": "^0.5.1",
     "apollo-server-express": "^2.6.8",
     "apollo-server-testing": "^2.6.8",
     "axios": "^0.19.0",
     "body-parser": "^1.19.0",
     "cookie-parser": "^1.4.4",
     "cors": "^2.8.5",
+    "dotenv": "^8.0.0",
     "express": "^4.17.1",
     "graphql": "^14.4.2",
     "isemail": "^3.2.0",
