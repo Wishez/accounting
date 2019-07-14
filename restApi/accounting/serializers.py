@@ -13,23 +13,6 @@ class TransactionTypeSerializer(serializers.ModelSerializer):
             'color',
         )
 
-class TransactionSerializer(serializers.ModelSerializer):
-    transactionType = TransactionTypeSerializer(read_only=True)
-    class Meta:
-        model = Transaction
-        fields = (
-            'uuid',
-            'transactionType',
-            'category',
-            'branch',
-            'note',
-            'consumption',
-            'profit',
-            'balance',
-            'date',
-            'order',
-        )
-
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -52,12 +35,31 @@ class UserSerializer(serializers.ModelSerializer):
             }
         }
 
+
+class AccountTransactionSerializer(serializers.ModelSerializer):
+    transactionType = TransactionTypeSerializer(read_only=True)
+
+    class Meta:
+        model = Transaction
+        fields = (
+            'uuid',
+            'transactionType',
+            'category',
+            'branch',
+            'note',
+            'consumption',
+            'profit',
+            'balance',
+            'date',
+            'order',
+        )
+
 updateTransactionsActions = {
     'remove': 'remove',
     'add': 'add',
 }
 class AccountSerializer(serializers.ModelSerializer):
-    transactions = TransactionSerializer(many=True, required=False)
+    transactions = AccountTransactionSerializer(many=True, required=False)
 
     class Meta:
         model = Account

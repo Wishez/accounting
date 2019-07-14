@@ -10,7 +10,6 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from .serializers import \
     UserSerializer, \
     AccountSerializer, \
-    TransactionSerializer, \
     TransactionTypeSerializer, \
     TransactionDetailSerializer
 
@@ -20,7 +19,7 @@ class BaseAPIView(APIView):
     def validate_request_properties():
         return
 
-    def get(self, request, email):
+    def get(self, request):
         return make_get_list_serializer(self.Model, self.GetSerializer)
 
     def post(self, request):
@@ -34,7 +33,7 @@ class BaseAPIView(APIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 class TransactionAPIView(BaseAPIView):
-    GetSerializer = TransactionSerializer
+    GetSerializer = TransactionDetailSerializer
     PostSerializer = TransactionDetailSerializer
     Model = Transaction
 
@@ -50,13 +49,13 @@ class CreateUserAPIView(BaseAPIView):
     Model = User
 
     def get(self, request):
-        data = JSONParser().parse(request)
+        data = request.GET.dict()
         email = data.get('email')
         if not email:
-            return Response('email должен быть валидным полем.', status=status.HTTP_400_BAD_REQUEST)
+            return Response({ "message": "email должен быть валидным полем." }, status=status.HTTP_400_BAD_REQUEST)
 
-        model = slef.Model.objects.get(email=email)
-        serializer = selg.GetSerializer(model)
+        model = self.Model.objects.get(email=email)
+        serializer = self.GetSerializer(model)
         return Response(serializer.data)
 
 class AccountAPIView(BaseAPIView):
@@ -92,13 +91,13 @@ def transaction_type_list(request):
     return make_serializer_list(request, TransactionType, TransactionTypeSerializer)
 
 @api_view(['GET'])
-def profile_detail(request):
+def profile_list(request):
     if request.method == 'GET':
         users = User.objects.all()
-        serializer = UserSerializer(users)
+        serializer = UserSerializer(users, many=True)
         return Response(serializer.data)
 
-def make_serializer_detail(request, Model, Serializer, uuid, PutSerializer=None):
+def make_serializer_detail(request, Model, Serializer, uuid):
     """
     Retrieve, update or delete a code snippet.
     """
@@ -113,7 +112,7 @@ def make_serializer_detail(request, Model, Serializer, uuid, PutSerializer=None)
 
     elif request.method == 'PUT':
         data = JSONParser().parse(request)
-        serializer = (PutSerializer or Serializer)(model, data=data, partial=True)
+        serializer = Serializer(model, data=data, partial=True)
         serializer.request_data = data
         if serializer.is_valid():
             serializer.save()

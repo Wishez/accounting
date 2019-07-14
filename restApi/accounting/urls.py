@@ -10,6 +10,7 @@ urlpatterns = [
     re_path(r'transactions/types/(?P<uuid>[-\w]+)/$', views.transaction_type_detail),
     path(r'transactions/', views.TransactionAPIView.as_view()),
     re_path(r'transactions/(?P<uuid>[-\w]+)/$', views.transaction_detail),
+    path(r'profiles/', views.profile_list),
     path(r'profile/', views.CreateUserAPIView.as_view()),
     re_path(r'profile/(?P<uuid>[-\w]+)/$', views.profile_detail),
 ]
