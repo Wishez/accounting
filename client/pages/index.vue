@@ -1,45 +1,39 @@
 <template>
   <section class="container">
-    <div>
-      <app-logo/>
-      <h1 class="title">
-        accounting
-      </h1>
-      <h2 class="subtitle">
-        Accounting for business.
-      </h2>
-      <div class="links">
-        <a
-          href="https://nuxtjs.org/"
-          target="_blank"
-          class="button--green">Documentation</a>
-        <a
-          href="https://github.com/nuxt/nuxt.js"
-          target="_blank"
-          class="button--grey">GitHub</a>
-      </div>
-    </div>
+    <h1>Счета</h1>
+
+    <ul>
+      <li v-for="(account, index) in accounts.data" :key="index">
+        <h2>{account.name}</h2>
+      </li>
+    </ul>
   </section>
 </template>
 
 <script>
-import AppLogo from '~/components/AppLogo.vue'
+import gql from 'graphql-tag'
 
 export default {
-  components: {
-    AppLogo
-  }
+  apollo: {
+    accounts: gql`
+      query {
+        accounts {
+          data {
+            id
+            color
+            name
+          }
+        }
+      }
+    `
+  },
+  mounted() {
+    console.log(this.accounts.data)
+  },
 }
 </script>
 
 <style>
-.container {
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-}
 
 .title {
   font-family: "Quicksand", "Source Sans Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; /* 1 */

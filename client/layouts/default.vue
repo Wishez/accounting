@@ -1,53 +1,105 @@
 <template>
   <div>
+    <header>
+      <div class="container">
+        <h1 class="title">
+          <img :src="appLogo" alt="Logo" class="logo">
+          БухУчёт
+        </h1>
+      </div>
+    </header>
     <nuxt/>
+
+    <footer>
+      <div class="container">
+        <nav class="navitaion">
+          <ul class="navitaionItems">
+            <menu-item
+              v-for="({ name, to, icon }, index) in links"
+              :key="index"
+              :name="name"
+              :to="to"
+              :icon="icon"
+            />
+          </ul>
+        </nav>
+      </div>
+    </footer>
   </div>
 </template>
 
+<script>
+import MenuItem from '~/components/MenuItem'
+import appLogo from '~/assets/logo.svg'
+export default {
+  data() {
+    return {
+      links: [
+        {
+          name: 'Главная',
+          to: '/',
+          icon: ['fas', 'igloo']
+        },
+        {
+          name: 'Статистика',
+          to: '/statistics',
+          icon: ['fas', 'chart-pie']
+        },
+        {
+          name: 'Войти',
+          to: '/login',
+          icon: ['fas', 'sign-in-alt']
+        },
+        {
+          name: 'Выйти',
+          to: '/logout',
+          icon: ['fas', 'sign-out-alt'],
+        },
+      ],
+      appLogo,
+    }
+  },
+  components: {
+    MenuItem,
+  },
+}
+</script>
+
 <style>
-html {
-  font-family: "Source Sans Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  font-size: 16px;
-  word-spacing: 1px;
-  -ms-text-size-adjust: 100%;
-  -webkit-text-size-adjust: 100%;
-  -moz-osx-font-smoothing: grayscale;
-  -webkit-font-smoothing: antialiased;
-  box-sizing: border-box;
+@import '~/assets/styles/base.scss';
+
+footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background-color: #fff;
 }
 
-*, *:before, *:after {
-  box-sizing: border-box;
-  margin: 0;
+.title {
+  display: block;
+  align-items: center;
 }
 
-.button--green {
-  display: inline-block;
-  border-radius: 4px;
-  border: 1px solid #3b8070;
-  color: #3b8070;
-  text-decoration: none;
-  padding: 10px 30px;
+.logo {
+  width: 45px;
 }
 
-.button--green:hover {
-  color: #fff;
-  background-color: #3b8070;
+.container {
+  max-width: 1024px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 1em;
 }
 
-.button--grey {
-  display: inline-block;
-  border-radius: 4px;
-  border: 1px solid #35495e;
-  color: #35495e;
-  text-decoration: none;
-  padding: 10px 30px;
-  margin-left: 15px;
+.navigations {
+  margin: 0 auto;
+}
+.navitaionItems {
+  padding: 0 0 1em;
+  display: flex;
+  justify-content: center;
 }
 
-.button--grey:hover {
-  color: #fff;
-  background-color: #35495e;
-}
 </style>
 
