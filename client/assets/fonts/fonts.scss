@@ -9,8 +9,6 @@
     $src: append($src, url(quote($path + "." + $extmod)) format(quote($format)), comma);
   }
   
-  
-
   @font-face {
     font-family: quote($name);
     font-style: $style;
@@ -20,6 +18,9 @@
   }
 }
 
-$mainFontName: 'PT Sans Caption';
+$mainFontName: 'PT Sans';
+$headingFontName: 'Vollkorn SC';
 @include font-face($mainFontName, './PTSans-Caption', normal, normal);
+@include font-face($headingFontName, './VollkornSC-Regular', normal, normal);
 @include font-face($mainFontName, './PTSans-CaptionBold', bold, normal);
+@include font-face($headingFontName, './VollkornSC-Bold', bold, normal);
