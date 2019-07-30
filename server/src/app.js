@@ -10,8 +10,8 @@ const resolvers = require('./resolvers')
 const context = require('./context')
 const schemaString = require('./schema')
 
-const accountingAPI = require('./datasources/accounting')
-const authAPI = require('./datasources/auth').api
+const AccountingAPI = require('./datasources/accounting')
+const AuthAPI = require('./datasources/auth').api
 
 const resolvePath = (pathTo) =>
   path.join(path.normalize(process.cwd()), pathTo)
@@ -19,8 +19,8 @@ const resolvePath = (pathTo) =>
 const server = new ApolloServer({
     typeDefs: schemaString,
     dataSources: () => ({
-      authAPI,
-      accountingAPI,
+      authAPI: new AuthAPI(),
+      accountingAPI: new AccountingAPI(),
     }),
     resolvers,
     context,
@@ -34,9 +34,6 @@ app.use(cors())
 app.use(cookieParser())
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: false }))
-app.get('*', (req, res, next) => {
-  next()
-})
 
 const graphqlPath = '/api' 
 server.applyMiddleware({ app, path: graphqlPath })
