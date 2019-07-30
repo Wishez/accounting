@@ -1,11 +1,11 @@
 <template>
-  <li class="listItem">
-    <nuxt-link class="listItemLink" :to="to">
+  <li v-if="isShown" class="listItem">
+    <nuxt-link class="listItemLink" :to="to" :exact="exact">
       <span class="iconContainer">
         <fa-icon class="iconContainer__icon" :icon="icon" />
       </span>
 
-      {{name}}
+      <span class="listItemLink__name">{{name}}</span>
     </nuxt-link>
   </li>
 </template>
@@ -23,6 +23,11 @@
         isRequired: true,
       },
       to: String,
+      exact: Boolean,
+      isShown: {
+        type: Boolean,
+        default: true
+      },
     }
   }
 </script>
@@ -47,6 +52,13 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+
+  &__name {
+
+    @media (--until-tablet) {
+      display: none;
+    }
+  }
 }
 
 .iconContainer {
