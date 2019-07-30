@@ -3,16 +3,20 @@ const Details = require('./scalarTypes').Details
 const makeCreateMutation = actionName => (_, { payload }, { dataSources }) => dataSources.accountingAPI[actionName](payload)
 const makeUpdateMutation = actionName => (_, { uuid, payload }, { dataSources }) => dataSources.accountingAPI[actionName](uuid, payload)
 const makeDeleteMutation = actionName => (_, { uuid }, { dataSources }) => dataSources.accountingAPI[actionName](uuid)
+const getList = requestName => (_, __, { dataSources }) => dataSources.accountingAPI[requestName]()
+const getItem = (requestName, itemKey) => (_, variables, { dataSources }) => dataSources.accountingAPI[requestName](variables[itemKey])
+
 module.exports = {
     Query: {
-        profiles: (_, __, { dataSources }) => dataSources.accountingAPI.getProfiles(),
-        accounts: (_, __, { dataSources }) => dataSources.accountingAPI.getAccounts(),
-        transactions: (_, __, { dataSources }) => dataSources.accountingAPI.getTransactions(),
-        transactionsTypes: (_, __, { dataSources }) => dataSources.accountingAPI.getTransactionsTypes(),
+        profiles: getList('getProfiles'),
+        accounts: getList('getAccounts'),
+        transactions: getList('getTransactions'),
+        transactionsTypes: getList('getTransactionsTypes'),
 
-        transaction: (_, { uuid }, { dataSources }) => dataSources.accountingAPI.getTransaction(uuid),
-        account: (_, { uuid }, { dataSources }) => dataSources.accountingAPI.getAccount(uuid),
-        profile: (_, { email }, { dataSources }) => dataSources.accountingAPI.getProfile(email),
+        transaction: getItem('getTransaction', 'uuid'),
+        account: getItem('getAccount', 'slug'),
+        transactionType: getItem('getTransactionType', 'slug'),
+        profile: getItem('getProfile', 'email'),
     },
 
     Mutation: {
