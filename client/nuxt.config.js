@@ -1,4 +1,17 @@
 module.exports = {
+  css: [
+    '~/assets/fonts/fonts.scss',
+  ],
+
+  plugins: [
+    { src: '~/plugins/cookies.js', mode: 'client' },
+    { src: '~/plugins/components.client.js', mode: 'client' },
+    '~/plugins/components.js',
+    '~/plugins/lodash.js',
+    '~/plugins/env.js',
+    '~/plugins/plugins.js',
+    '~/plugins/globalFilters.js',
+  ],
   /*
   ** Headers of the page
   */
@@ -21,6 +34,36 @@ module.exports = {
   ** Build configuration
   */
   build: {
+    postcss: {
+      // Add plugin names as key and arguments as value
+      // Install them before as dependencies with npm or yarn
+      plugins: {
+        // Disable a plugin by passing false as value 
+        'postcss-url': false,
+        // 'postcss-nested': {},
+        'postcss-custom-media': {
+          importFrom: [
+            {
+              customMedia: {
+                "--from-desktop": "(min-width: 1152px)",
+                "--from-mobile": "(min-width: 321px)",
+                "--until-mobile": "(max-width: 321px)",
+                "--until-tablet": "(max-width: 768px)",
+                "--from-tablet": "(min-width: 768px)",
+              }
+            }
+          ]
+        }
+        // 'postcss-responsive-type': {},
+        // 'postcss-hexrgba': {}
+      },
+      // preset: {
+        // Change the postcss-preset-env settings
+      //   autoprefixer: {
+      //     grid: true
+      //   }
+      // }
+    },
     /*
     ** Run ESLint on save
     */
@@ -42,16 +85,17 @@ module.exports = {
       packs: [
         {
           package: '@fortawesome/free-solid-svg-icons',
-          icons: ['faIgloo', 'faHome', 'faSignOutAlt', 'faSignInAlt', 'faChartPie'],
+          icons: ['faIgloo', 'faHome', 'faSignOutAlt', 'faSignInAlt', 'faChartPie', 'faEyeSlash', 'faEye', 'faTimes', 'faUsers', 'faCheckCircle'],
         },
       ],
       includeCss: true,
     }],
-    '@nuxtjs/apollo'
+    '@nuxtjs/apollo',
+    '@radial-color-picker/vue-color-picker/nuxt'
   ],
 
   apollo: {
-    // tokenName: 'yourApolloTokenName', // optional, default: apollo-token
+    tokenName: 'access_token', // optional, default: apollo-token
     cookieAttributes: {
       /**
         * Define when the cookie will be removed. Value can be a Number
@@ -82,17 +126,22 @@ module.exports = {
     defaultOptions: {
       // See 'apollo' definition
       // For example: default query options
-      $query: {
-        loadingKey: 'loading',
-        fetchPolicy: 'cache-and-network',
-      },
+
+      // $watchQuery: {
+      //   fetchPolicy: 'network-only',
+      //   errorPolicy: 'ignore',
+      // },
+      // $query: {
+      //   fetchPolicy: 'network-only',
+      //   errorPolicy: 'all',
+      // },
     },
     // optional
     errorHandler: '~/plugins/apollo-error-handler.js',
     // required
     clientConfigs: {
       default: {
-        // required  
+        // required
         httpEndpoint: 'http://localhost:4000/api',
         // optional
         // See https://www.apollographql.com/docs/link/links/http.html#options
@@ -105,7 +154,7 @@ module.exports = {
         // Use `null` to disable subscriptions
         // wsEndpoint: 'ws://localhost:4000/api', // optional
         // LocalStorage token
-        // tokenName: 'apollo-token', // optional
+        tokenName: 'access_token', // optional
         // Enable Automatic Query persisting with Apollo Engine
         persisting: false, // Optional
         // Use websockets for everything (no HTTP)
@@ -115,10 +164,10 @@ module.exports = {
       // test: {
       //   httpEndpoint: 'http://localhost:5000',
       //   wsEndpoint: 'ws://localhost:5000',
-      //   tokenName: 'apollo-token'
+      //   tokenName: 'access_token'
       // },
       // alternative: user path to config which returns exact same config options
       // test2: '~/plugins/my-alternative-apollo-config.js'
     }
-  }
+  },
 }
