@@ -82,6 +82,11 @@ class TransactionType(TimeStampedModel):
     )
     name = models.CharField(_('Имя'), max_length=50)
     color = models.CharField(_('Цвет'), max_length=9, blank=True, null=True)
+    slug = models.SlugField(
+			_('URL'),
+			max_length=50,
+			unique=True
+		)
 
 class Transaction(TimeStampedModel):
 	uuid = models.UUIDField(
@@ -90,6 +95,7 @@ class Transaction(TimeStampedModel):
 		default=uuid_lib.uuid4,
 		editable=True
 	)
+	# slug = models.SlugField(_('URL'), max_length=50, unique=True)
 	transactionType = models.ForeignKey(
 		TransactionType,
 		verbose_name=_("Транзакции счёта"),
@@ -144,6 +150,7 @@ class Account(TimeStampedModel):
 		default=uuid_lib.uuid4,
 		editable=True
 	)
+	slug = models.SlugField(_('URL'), max_length=50, unique=True)
 	name = models.CharField(_('Имя'), max_length=50)
 	transactions = models.ManyToManyField(
 		Transaction,
