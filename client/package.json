@@ -15,14 +15,27 @@
   "dependencies": {
     "@fortawesome/free-regular-svg-icons": "^5.9.0",
     "@fortawesome/free-solid-svg-icons": "^5.9.0",
+    "@mathieustan/vue-datepicker": "^0.1.8-rc.2",
     "@nuxtjs/apollo": "^4.0.0-rc8.1",
+    "@radial-color-picker/vue-color-picker": "^2.3.0",
+    "cyrillic-to-translit-js": "^2.2.0",
     "graphql-tag": "^2.10.1",
+    "js-cookies": "^1.0.4",
+    "lodash": "^4.17.14",
+    "moment": "^2.24.0",
     "node-sass": "^4.12.0",
     "nuxt": "^2.0.0",
     "qonfucius-nuxt-fontawesome": "^1.0.1",
+    "rxjs": "^6.5.2",
+    "rxjs-compat": "^6.5.2",
     "sass-loader": "^7.1.0",
+    "v-money": "^0.8.1",
     "vue": "^2.6.6",
+    "vue-color-picker": "^0.6.1",
+    "vue-cookies": "^1.5.13",
+    "vue-rx": "^6.2.0",
     "vue-server-renderer": "^2.6.6",
+    "vue-simple-search-dropdown": "^1.0.1",
     "vue-template-compiler": "^2.6.6"
   },
   "devDependencies": {
@@ -30,6 +43,7 @@
     "eslint": "^4.19.1",
     "eslint-friendly-formatter": "^4.0.1",
     "eslint-loader": "^2.1.1",
-    "eslint-plugin-vue": "^4.0.0"
+    "eslint-plugin-vue": "^4.0.0",
+    "postcss-custom-media": "^7.0.8"
   }
 }
