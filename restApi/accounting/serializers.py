@@ -11,6 +11,7 @@ class TransactionTypeSerializer(serializers.ModelSerializer):
             'uuid',
             'name',
             'color',
+            'slug',
         )
 
 class UserSerializer(serializers.ModelSerializer):
@@ -65,6 +66,7 @@ class AccountSerializer(serializers.ModelSerializer):
         model = Account
         fields = (
             'uuid',
+            'slug',
             'name',
             'transactions',
             'color',
@@ -81,10 +83,9 @@ class AccountSerializer(serializers.ModelSerializer):
         requestData = self.request_data
         transactionsIds = requestData.get('transactionsIds', [])
         transactions = Transaction.objects.filter(uuid__in=transactionsIds)
-        Account.objects.update(**validated_data)
+        Account.objects.filter(uuid=instance.uuid).update(**validated_data)
         action = requestData.get('action')
         transactionsIdsLength = len(transactionsIds)
-        print(action)
         if transactionsIdsLength > 0 and not updateTransactionsActions[action]:
             raise Exception('action должно быть одиним из значений: remove/add')
         elif transactionsIdsLength > 0:
@@ -117,17 +118,33 @@ class TransactionDetailSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         data = self.request_data
+
         accountId = data.get('accountId')
         account = Account.objects.get(uuid=accountId)
-
         if not account:
             raise Exception('Нет аккаунта с uuid: %s' % accountId)
         
         transactionTypeId = data.get('transactionTypeId')
         transactionType = TransactionType.objects.get(uuid=transactionTypeId)
-        if not account:
+        if not transactionType:
             raise Exception('Нет типа транзакции с uuid: %s' % transactionTypeId)
         
         transaction = Transaction.objects.create(transactionType=transactionType, account=account, **validated_data)
+        transaction.order = len(Transaction.objects.filter(date=validated_data.get('date')))
+
         account.transactions.add(transaction)
         return transaction
+    
+    def update(self, instance, validated_data):
+        transaction = Transaction.objects.filter(uuid=instance.uuid)
+
+        transactionTypeId = self.request_data.get('transactionTypeId')
+        if transactionTypeId:
+            transactionType = TransactionType.objects.get(uuid=transactionTypeId)
+            if not transactionType:
+                raise Exception('Нет типа транзакции с uuid: %s' % transactionTypeId)
+
+            transaction.update(transactionType=transactionType)
+
+        transaction.update(**validated_data)
+        return instance

@@ -97,10 +97,30 @@ def profile_list(request):
         serializer = UserSerializer(users, many=True)
         return Response(serializer.data)
 
-def make_serializer_detail(request, Model, Serializer, uuid):
-    """
-    Retrieve, update or delete a code snippet.
-    """
+def make_serializer_detail_with_slug(request, Model, Serializer, slug):    
+    try:
+        model = Model.objects.get(slug=slug)
+    except Model.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        serializer = Serializer(model)
+        return Response(serializer.data)
+
+    elif request.method == 'PUT':
+        data = JSONParser().parse(request)
+        serializer = Serializer(model, data=data, partial=True, many=False)
+        serializer.request_data = data
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    elif request.method == 'DELETE':
+        model.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+def make_serializer_detail_with_uuid(request, Model, Serializer, uuid):    
     try:
         model = Model.objects.get(uuid=uuid)
     except Model.DoesNotExist:
@@ -112,7 +132,7 @@ def make_serializer_detail(request, Model, Serializer, uuid):
 
     elif request.method == 'PUT':
         data = JSONParser().parse(request)
-        serializer = Serializer(model, data=data, partial=True)
+        serializer = Serializer(model, data=data, partial=True, many=False)
         serializer.request_data = data
         if serializer.is_valid():
             serializer.save()
@@ -123,18 +143,26 @@ def make_serializer_detail(request, Model, Serializer, uuid):
         model.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-@api_view(['GET', 'PUT', 'DELETE'])
-def transaction_detail(request, uuid):
-    return make_serializer_detail(request, Transaction, TransactionDetailSerializer, uuid)
+@api_view(['PUT', 'DELETE'])
+def account_detail(request, uuid):
+    return make_serializer_detail_with_uuid(request, Account, AccountSerializer, uuid)
 
 @api_view(['GET', 'PUT', 'DELETE'])
-def account_detail(request, uuid):
-    return make_serializer_detail(request, Account, AccountSerializer, uuid)
+def transaction_detail(request, uuid):
+    return make_serializer_detail_with_uuid(request, Transaction, TransactionDetailSerializer, uuid)
+
+@api_view(['GET'])
+def get_account_detail(request, slug):
+    return make_serializer_detail_with_slug(request, Account, AccountSerializer, slug)
 
 @api_view(['PUT', 'DELETE'])
 def profile_detail(request, uuid):
-    return make_serializer_detail(request, User, UserSerializer, uuid)
+    return make_serializer_detail_with_uuid(request, User, UserSerializer, uuid)
+
+@api_view(['GET'])
+def get_transaction_type_detail(request, slug):
+    return make_serializer_detail_with_slug(request, TransactionType, TransactionTypeSerializer, slug)
 
 @api_view(['PUT', 'DELETE'])
 def transaction_type_detail(request, uuid):
-    return make_serializer_detail(request, TransactionType, TransactionTypeSerializer, uuid)
+    return make_serializer_detail_with_uuid(request, TransactionType, TransactionTypeSerializer, uuid)
