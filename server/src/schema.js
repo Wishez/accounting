@@ -7,8 +7,9 @@ const schemaString = gql`
         transactions: TransactionsResponse!
         transactionsTypes: TransactionsTypesResponse!
 
-        account(uuid: String!): AccountResponse!
+        account(slug: String!): AccountResponse!
         transaction(uuid: String!): TransactionResponse!
+        transactionType(slug: String!): TransactionTypeResponse!
         profile(email: String!): ProfileResponse!
     }
 
@@ -51,6 +52,12 @@ const schemaString = gql`
         data: [TransactionType]!
     }
 
+    type TransactionTypeResponse {
+        isSuccess: Boolean!
+        details: Details
+        data: TransactionType!
+    }
+
     type AccountResponse {
         isSuccess: Boolean!
         details: Details
@@ -75,7 +82,7 @@ const schemaString = gql`
         firstName: String!
         lastName: String
         role(name: RoleName): String!
-        dataJoined: String!,
+        dateJoined: String!,
     }
 
     enum RoleName {
@@ -87,20 +94,29 @@ const schemaString = gql`
     type Account {
         id: ID!
         name: String!
+        slug: String!
         transactions: [Transaction]!
         color: String
     }
 
     type TransactionAccount {
         id: ID!
+        slug: String!
         name: String!
         color: String
     }
 
     type TransactionDetail {
         id: ID!
-        name: String!
         type: TransactionType!
+        category: String!
+        branch: String
+        note: String
+        consumption: Float!
+        profit: Float!
+        balance: Float!
+        date: String!
+        order: Int
         account: TransactionAccount!
     }
 
@@ -108,6 +124,7 @@ const schemaString = gql`
         id: ID!
         name: String!
         color: String
+        slug: String!
     }
     
     type Mutation {
@@ -115,7 +132,7 @@ const schemaString = gql`
         refreshAuth(refreshToken: String!): RefreshAuthResponse!
         verifyAuth(token: String!): VerifyAuthResponse!
 
-        createTransaction(payload: CreateTransactionPayload!): ProfileResponse!
+        createTransaction(payload: CreateTransactionPayload!): TransactionResponse!
         updateTransaction(uuid: String!, payload: UpdateTransactionPayload!): TransactionResponse!
         deleteTransaction(uuid: String!): DeleteItemResponse!
 
@@ -151,8 +168,8 @@ const schemaString = gql`
     }
 
     input CreateTransactionPayload {
-        accoutId: String!
-        transactionTypeId: [String]!
+        accountId: String!
+        transactionTypeId: String!
         balance: Float
         profit: Float,
         consumption: Float,
@@ -164,9 +181,10 @@ const schemaString = gql`
     }
 
     input UpdateTransactionPayload {
+        transactionTypeId: String
         balance: Float
-        profit: Float,
-        consumption: Float,
+        profit: Float
+        consumption: Float
         order: Int
         branch: String
         note: String
@@ -179,7 +197,6 @@ const schemaString = gql`
         details: Details
         data: String
     }
-
 
     input CreateProfilePayload {
         email: String!
@@ -196,31 +213,29 @@ const schemaString = gql`
     }
 
     input CreateAccountPayload {
+        slug: String!
         name: String!
         color: String
     }
 
     input UpdateAccountPayload {
+        slug: String
         transactionIds: [String]
         action: String
         name: String
         color: String
     }
 
-    type TransactionTypeResponse {
-        isSuccess: Boolean!
-        details: Details
-        data: TransactionType!
-    }
-
     input CreateTransactionTypePayload {
         name: String!
         color: String
+        slug: String!
     }
 
     input UpdateTransactionTypePayload {
         name: String
         color: String
+        slug: String
     }
 `
 
