@@ -1,15 +1,19 @@
 const { RESTDataSource } = require('apollo-datasource-rest');
-const config = require('../env')
+const env = require('../env')
 const isArray = require('lodash/isArray')
 
 class AccountingAPI extends RESTDataSource {
   constructor() {
     super()
-    this.baseURL = config.ACCOUNTING_API_URL
+    this.baseURL = env.ACCOUNTING_API_URL
   }
 
-  async getAccount(uuid) {
-    const result = await this.get(`accounts/${uuid}/`)
+  willSendRequest(request) {
+    if (this.context.isAuth) request.headers.set('Authorization', `Bearer ${this.context.token}`);
+  }
+
+  async getAccount(slug) {
+    const result = await this.get(`account/${slug}/`)
     return AccountingAPI.getItemResponse(result, AccountingAPI.reduceAccount)
   }
 
@@ -30,7 +34,7 @@ class AccountingAPI extends RESTDataSource {
       category,
       branch,
       profit,
-      comsumption,
+      consumption,
       balance,
       date,
       order,
@@ -47,18 +51,19 @@ class AccountingAPI extends RESTDataSource {
       balance,
       date,
       order,
-      comsumption,
+      consumption,
     }
   }
 
   static reduceTransactionType(transactionType) {
     if (!transactionType.uuid) return null
 
-    const { color, name, uuid } = transactionType
+    const { color, name, uuid, slug } = transactionType
     return {
       id: uuid,
       color,
       name,
+      slug,
     }
   }
 
@@ -77,8 +82,8 @@ class AccountingAPI extends RESTDataSource {
   }
 
   async createAccount(payload) {
-    const { name, color } = payload
-    const result = await this.post('accounts/', { name, color })
+    const { name, color, slug } = payload
+    const result = await this.post('accounts/', { name, color, slug })
     return AccountingAPI.getItemResponse(result, AccountingAPI.reduceAccount)
   }
 
@@ -100,12 +105,14 @@ class AccountingAPI extends RESTDataSource {
       action,
       name,
       color,
+      slug,
     } = payload
     const result = await this.put(`accounts/${uuid}/`, {
       transactionIds,
       action,
       name,
       color,
+      slug,
     })
     return AccountingAPI.getItemResponse(result, AccountingAPI.reduceAccount)
   }
@@ -140,10 +147,10 @@ class AccountingAPI extends RESTDataSource {
 
   static reduceTransactionAccount(account) {
     if (!account.uuid) return null
-
-    const { color, uuid, name } = account
+    const { color, uuid, name, slug } = account
     return {
       id: uuid,
+      slug,
       color,
       name,
     }
@@ -156,7 +163,7 @@ class AccountingAPI extends RESTDataSource {
 
   async createTransaction(payload) {
     const {
-      accoutId,
+      accountId,
       transactionTypeId,
       balance,
       profit,
@@ -166,9 +173,10 @@ class AccountingAPI extends RESTDataSource {
       note,
       date,
       category,
+      slug,
     } = payload
     const result = await this.post('transactions/', {
-      accoutId,
+      accountId,
       transactionTypeId,
       balance,
       profit,
@@ -178,12 +186,14 @@ class AccountingAPI extends RESTDataSource {
       note,
       date,
       category,
+      slug,
     })
     return AccountingAPI.getItemResponse(result, AccountingAPI.reduceTransaction)
   }
   
   async updateTransaction(uuid, payload) {
     const {
+      slug,
       balance,
       profit,
       consumption,
@@ -202,6 +212,7 @@ class AccountingAPI extends RESTDataSource {
       note,
       date,
       category,
+      slug,
     })
     return AccountingAPI.getItemResponse(result, AccountingAPI.reduceTransaction)
   }
@@ -216,11 +227,22 @@ class AccountingAPI extends RESTDataSource {
     return AccountingAPI.getListResponse(results, AccountingAPI.reduceTransactionType)
   }
 
+  async createTransactionType(payload) {
+    const { name, color, slug } = payload
+    const result = await this.post(`transactions/types/`, {
+      name,
+      color,
+      slug,
+    })
+    return AccountingAPI.getItemResponse(result, AccountingAPI.reduceTransactionType)
+  }
+
   async updateTransactionType(uuid, payload) {
-    const { name, color } = payload
+    const { name, color, slug } = payload
     const result = await this.put(`transactions/types/${uuid}/`, {
       name,
       color,
+      slug,
     })
     return AccountingAPI.getItemResponse(result, AccountingAPI.reduceTransactionType)
   }
@@ -235,6 +257,11 @@ class AccountingAPI extends RESTDataSource {
     return AccountingAPI.getItemResponse(result, AccountingAPI.reduceProfile)
   }
 
+  async getTransactionType(slug) {
+    const result = await this.get(`transactions/type/${slug}/`)
+    return AccountingAPI.getItemResponse(result, AccountingAPI.reduceTransactionType)
+  }
+
   async getProfiles() {
     const results = await this.get('profiles/')
     return AccountingAPI.getListResponse(results, AccountingAPI.reduceProfile)
@@ -242,15 +269,15 @@ class AccountingAPI extends RESTDataSource {
 
   static reduceProfile(profile) {
     if (!profile.uuid) return null
-    const { uuid, name, email, role, data_joined } = profile
+    const { uuid, name, email, role, date_joined } = profile
     const [firstName, middleName, lastName] = name.split(' ')
-    console.log(name, firstName, middleName)
+  
     const hasNotMiddleName = !lastName
     return {
       id: uuid,
       firstName: `${firstName} ${hasNotMiddleName ? '' : middleName}`,
       lastName: hasNotMiddleName ? middleName : lastName,
-      dateJoined: data_joined,
+      dateJoined: date_joined,
       email,
       role,
     }
@@ -294,4 +321,4 @@ class AccountingAPI extends RESTDataSource {
   }
 }
 
-module.exports = new AccountingAPI()
+module.exports = AccountingAPI
