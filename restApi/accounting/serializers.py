@@ -137,7 +137,7 @@ class TransactionDetailSerializer(serializers.ModelSerializer):
     
     def update(self, instance, validated_data):
         transaction = Transaction.objects.filter(uuid=instance.uuid)
-
+        print('validated_data', validated_data)
         transactionTypeId = self.request_data.get('transactionTypeId')
         if transactionTypeId:
             transactionType = TransactionType.objects.get(uuid=transactionTypeId)
@@ -147,4 +147,11 @@ class TransactionDetailSerializer(serializers.ModelSerializer):
             transaction.update(transactionType=transactionType)
 
         transaction.update(**validated_data)
+
+        date = validated_data.get('date')
+        if date != instance.date:
+            transactionType = transactionType or instance.transactionType
+            order = len(Transaction.objects.filter(date=validated_data.get('date'), transactionType=transactionType))
+            transaction.update(order=order)
+
         return instance
