@@ -129,7 +129,7 @@ class Transaction(TimeStampedModel):
 	)
 	date = models.DateField(
 			_('Дата проведения операции'),
-			auto_now_add=True
+			default=timezone.now
 	)
 	order = models.IntegerField(
 		_('Порядок операции'),
