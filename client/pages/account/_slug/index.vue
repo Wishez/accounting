@@ -7,7 +7,7 @@
 
     <transaction-types />
 
-    <account-filter @change="updateCategories" />
+    <account-filter :accountCategories="accountCategories" @change="updateCategories" />
 
     <section>
       <div class="accountHeader">
@@ -21,8 +21,7 @@
           <li v-for="({ typeName, name, items, transactions }, index) in categories" :key="index + updateCount" class="account-transactions-category litter">
             <h2>{{typeName}}</h2>
             
-
-            <div v-for="(subTransactions, index) in Object.values(transactions)" :key="index + updateCount">
+            <div v-for="(subTransactions, index) in sortByDate(Object.values(transactions))" :key="index + updateCount">
               <h3>{{subTransactions.date | formatDate('DD MMMM YYYY')}}</h3>
 
               <div class="account-transactions-header">
@@ -123,6 +122,7 @@ export default {
     categories: [],
     accountBalance: 0,
     statistics: [],
+    accountCategories: [],
   }),
 
   computed: {
@@ -170,11 +170,22 @@ export default {
         }
       }, {}))
 
-      if (categories.length) {
-        const { last, mapValues } = this.$lodash
-        const lastTransaction = last(this.account.transactions)
-        this.accountBalance = Number(get(lastTransaction, 'balance', 0)).toFixed(2)
+      const { transactions } = this.account
+      const { last, mapValues } = this.$lodash
+      const lastTransaction = this.sortByDate(transactions)[0]
+      this.accountBalance = Number(get(lastTransaction, 'balance', 0)).toFixed(2)
+      this.accountCategories = Object.values(transactions.reduce((result, { type }) => {
+        const { name, id } = type
+        return {
+          ...result,
+          [id]: {
+            name,
+            id,
+          }
+        }
+      }, {}))
 
+      if (categories.length) {
         this.statistics = categories.reduce((result, { transactions }) => {
           let categoryTransactions = []
           mapValues(transactions, ({ items }) => {
@@ -189,6 +200,11 @@ export default {
 
       this.updateCount += 1
       this.categories = [...categories]
+    },
+
+    sortByDate(transactions) {
+      const getTime = ({ date }) => new Date(date).getTime()
+      return transactions.sort((a, b) => getTime(b) - getTime(a))
     },
 
     showError(e) {

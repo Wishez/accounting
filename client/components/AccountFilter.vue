@@ -5,7 +5,7 @@
     <div class="fields">
       <div class="datepicker-holder">
         <base-dropdown
-          :options="transactionsTypes"
+          :options="accountCategories || transactionsTypes"
           @selected="validateSelection"
           placeholder="Тип транзакции"
         />
@@ -59,9 +59,18 @@ export default {
 
       update({ transactionsTypes }) {
         return transactionsTypes.isSuccess ? transactionsTypes.data : []
+      },
+
+      skip() {
+        return Boolean(this.accountCategories)
       }
     },
   },
+
+  props: {
+    accountCategories: Array,
+  },
+
   data: () => ({
     date: undefined,
     localeCalender,
