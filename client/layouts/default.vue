@@ -17,7 +17,7 @@
         <nav class="navitaion">
           <ul class="navitaionItems">
             <menu-item
-              v-for="({ name, to, icon, isExact, isShown }, index) in links"
+              v-for="({ name, to, icon, isExact, isShown, id }, index) in links"
               :isShown="isShown"
               :key="index"
               :name="name"
@@ -33,14 +33,17 @@
 </template>
 
 <script>
+import { fromEvent } from 'rxjs'
+import { filter, map, throttleTime } from 'rxjs/operators'
 import { MenuItem } from '~/components'
-import { verifyTokenGql, getProfileGql } from '~/constants/gql'
-import { Roles } from '~/constants/user'
+import { verifyTokenGql } from '~/constants/gql'
+import { Roles, fetechUserProfile } from '~/constants/user'
+
 
 export default {
   computed: {
     links() {
-      const { isLoggedIn, user } = this.$store.state.auth
+      const { isLoggedIn, isUserAdmin } = this.$store.state.auth
       const isNotLoggedIn = !isLoggedIn
       return [
         {
@@ -60,7 +63,13 @@ export default {
           name: 'Пользователи',
           to: '/users',
           icon: ['fas', 'users'],
-          isShown: isLoggedIn && user.role === Roles.ADMIN,
+          isShown: isUserAdmin,
+        },
+        {
+          name: 'Профиль',
+          to: '/personal-room',
+          icon: ['fas', 'user-tie'],
+          isShown: isLoggedIn,
         },
         {
           name: 'Войти',
@@ -85,6 +94,7 @@ export default {
       if (token) this.verifyAuth(token)
       else this.redirectToLoginPage()
   },
+
   methods: {
     async verifyAuth(token) {
       try {
@@ -95,16 +105,8 @@ export default {
         .catch(() => console.log('User unauthorized.'))
 
         const email = this.$lodash.get(response, 'email')
-        this.$store.commit('auth/setLoggedInState', true)
-        if (email) {
-          const profileResponse = await this.$apollo.query({
-            query: getProfileGql,
-            variables: { email },
-          }).then(({ data }) => data.profile.data)
-            .catch((e) => console.log('Не получилось запросить данные аккаунта', e.message))
-    
-          if (profileResponse.id) this.$store.commit('auth/setCurrentProfile', profileResponse)
-        } else this.redirectToLoginPage()
+        if (email) fetechUserProfile.call(this, email)
+        else this.redirectToLoginPage()
       } catch (e) {
         console.error(e)
       }
@@ -113,7 +115,19 @@ export default {
     redirectToLoginPage() {
       this.$router.push('/login')
     }
-  }
+  },
+
+  subscriptions() {
+    if (!this.$env.canUseDOM) return
+
+    return {
+      $escape: fromEvent(document, 'keydown').pipe(
+        throttleTime(1000),
+        filter(({ keyCode }) => keyCode === 27 && this.$store.state.popups.isPopupOpened),
+        map(() => this.$store.commit('popups/closePopups')),
+      ),
+    }
+  },
 }
 </script>
 
@@ -154,6 +168,7 @@ footer {
   max-width: 100vw;
   background-color: #fff;
   padding-top: 1em;
+  z-index: 1;
 }
 
 .container {
