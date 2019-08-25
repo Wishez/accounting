@@ -20,6 +20,9 @@ class UserManager(BaseUserManager):
 		if not email:
 			raise ValueError('The given email must be set')
 
+		if not password:
+			raise ValueError('The password is required!')
+
 		email = self.normalize_email(email)
 		user = self.model(email=email, **extra_fields)
 		user.set_password(password)
@@ -63,6 +66,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 	is_active = models.BooleanField(default=True)
 	is_staff = models.BooleanField(default=False)
 	date_joined = models.DateTimeField(auto_now_add=True)
+	is_deleted = models.BooleanField(_('Удалён?'), default=False)
 
 	USERNAME_FIELD = 'email'
 	REQUIRED_FIELDS = ['name']
@@ -74,19 +78,20 @@ class User(AbstractBaseUser, PermissionsMixin):
 		return self
 
 class TransactionType(TimeStampedModel):
-    uuid = models.UUIDField(
-        _('Идентификатор'),
-        db_index=True,
-        default=uuid_lib.uuid4,
-        editable=True
-    )
-    name = models.CharField(_('Имя'), max_length=50)
-    color = models.CharField(_('Цвет'), max_length=9, blank=True, null=True)
-    slug = models.SlugField(
-			_('URL'),
-			max_length=50,
-			unique=True
-		)
+	uuid = models.UUIDField(
+			_('Идентификатор'),
+			db_index=True,
+			default=uuid_lib.uuid4,
+			editable=True
+	)
+	name = models.CharField(_('Имя'), max_length=50)
+	color = models.CharField(_('Цвет'), max_length=9, blank=True, null=True)
+	slug = models.SlugField(
+		_('URL'),
+		max_length=50,
+		unique=True
+	)
+	is_deleted = models.BooleanField(_('Удалён?'), default=False)
 
 class Transaction(TimeStampedModel):
 	uuid = models.UUIDField(
@@ -142,6 +147,7 @@ class Transaction(TimeStampedModel):
 		blank=True,
 		on_delete="SET_NULL"
 	)
+	is_deleted = models.BooleanField(_('Удалён?'), default=False)
 
 class Account(TimeStampedModel):
 	uuid = models.UUIDField(
@@ -159,3 +165,4 @@ class Account(TimeStampedModel):
 		blank=True,
 	)
 	color = models.CharField(_('Цвет'), max_length=9, blank=True, null=True)
+	is_deleted = models.BooleanField(_('Удалён?'), default=False)

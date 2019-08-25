@@ -16,7 +16,7 @@ from .serializers import \
 class BaseAPIView(APIView):
     permission_classes = (IsAuthenticated,)
 
-    def validate_request_properties():
+    def validate_request_properties(self, data):
         return
 
     def get(self, request):
@@ -24,9 +24,9 @@ class BaseAPIView(APIView):
 
     def post(self, request):
         data = request.data
+        payload = data.get('payload')
         self.validate_request_properties(data)
-
-        serializer = self.PostSerializer(data=data)
+        serializer = self.PostSerializer(data=payload)
         serializer.request_data = data
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -104,6 +104,9 @@ def make_serializer_detail_with_slug(request, Model, Serializer, slug):
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
+        if model.is_deleted:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
         serializer = Serializer(model)
         return Response(serializer.data)
 
@@ -116,8 +119,9 @@ def make_serializer_detail_with_slug(request, Model, Serializer, slug):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    elif request.method == 'DELETE':
-        model.delete()
+    elif request.method == 'PATCH':
+        model.is_deleted = not model.is_deleted
+        model.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 def make_serializer_detail_with_uuid(request, Model, Serializer, uuid):    
@@ -127,6 +131,9 @@ def make_serializer_detail_with_uuid(request, Model, Serializer, uuid):
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
+        if model.is_deleted:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
         serializer = Serializer(model)
         return Response(serializer.data)
 
@@ -139,15 +146,17 @@ def make_serializer_detail_with_uuid(request, Model, Serializer, uuid):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    elif request.method == 'DELETE':
-        model.delete()
+    elif request.method == 'PATCH':
+        model.is_deleted = not model.is_deleted
+        model.save()
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-@api_view(['PUT', 'DELETE'])
+@api_view(['PUT', 'PATCH'])
 def account_detail(request, uuid):
     return make_serializer_detail_with_uuid(request, Account, AccountSerializer, uuid)
 
-@api_view(['GET', 'PUT', 'DELETE'])
+@api_view(['GET', 'PUT', 'PATCH'])
 def transaction_detail(request, uuid):
     return make_serializer_detail_with_uuid(request, Transaction, TransactionDetailSerializer, uuid)
 
@@ -155,7 +164,7 @@ def transaction_detail(request, uuid):
 def get_account_detail(request, slug):
     return make_serializer_detail_with_slug(request, Account, AccountSerializer, slug)
 
-@api_view(['PUT', 'DELETE'])
+@api_view(['PUT', 'PATCH'])
 def profile_detail(request, uuid):
     return make_serializer_detail_with_uuid(request, User, UserSerializer, uuid)
 
@@ -163,6 +172,6 @@ def profile_detail(request, uuid):
 def get_transaction_type_detail(request, slug):
     return make_serializer_detail_with_slug(request, TransactionType, TransactionTypeSerializer, slug)
 
-@api_view(['PUT', 'DELETE'])
+@api_view(['PUT', 'PATCH'])
 def transaction_type_detail(request, uuid):
     return make_serializer_detail_with_uuid(request, TransactionType, TransactionTypeSerializer, uuid)

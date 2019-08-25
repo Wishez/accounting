@@ -3,8 +3,8 @@ const Details = require('./scalarTypes').Details
 const makeCreateMutation = actionName => (_, { payload }, { dataSources }) => dataSources.accountingAPI[actionName](payload)
 const makeUpdateMutation = actionName => (_, { uuid, payload }, { dataSources }) => dataSources.accountingAPI[actionName](uuid, payload)
 const makeDeleteMutation = actionName => (_, { uuid }, { dataSources }) => dataSources.accountingAPI[actionName](uuid)
-const getList = requestName => (_, __, { dataSources }) => dataSources.accountingAPI[requestName]()
-const getItem = (requestName, itemKey) => (_, variables, { dataSources }) => dataSources.accountingAPI[requestName](variables[itemKey])
+const getList = requestName => (_, { isDeletedShown }, { dataSources }) => dataSources.accountingAPI[requestName](isDeletedShown)
+const getItem = (requestName) => (_, variables, { dataSources }) => dataSources.accountingAPI[requestName]({ ...variables })
 
 module.exports = {
     Query: {
@@ -13,10 +13,10 @@ module.exports = {
         transactions: getList('getTransactions'),
         transactionsTypes: getList('getTransactionsTypes'),
 
-        transaction: getItem('getTransaction', 'uuid'),
-        account: getItem('getAccount', 'slug'),
-        transactionType: getItem('getTransactionType', 'slug'),
-        profile: getItem('getProfile', 'email'),
+        transaction: getItem('getTransaction'),
+        account: getItem('getAccount'),
+        transactionType: getItem('getTransactionType'),
+        profile: getItem('getProfile'),
     },
 
     Mutation: {
