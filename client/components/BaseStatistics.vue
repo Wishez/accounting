@@ -54,19 +54,20 @@ export default {
   name: "BaseStatistics",
   computed: {
     statistics() {
-      return this.transactions.reduce((result, transaction) => {
+      const { transactions } = this
+      const statistics = this.transactions.reduce((result, transaction) => {
         const { balance = 0, profit = 0, consumption = 0 } = transaction
 
         return {
           profit: (Number(result.profit) + Number(profit)).toFixed(2),
           consumption: (Number(result.consumption) + Number(consumption)).toFixed(2),
-          balance: (Number(result.balance) + Number(balance)).toFixed(2),
         }
       }, {
         profit: 0.00,
         consumption: 0.00,
-        balance: 0.00,
       })
+      statistics.balance = Number(this.$lodash.get(transactions, '0.balance', 0)).toFixed(2)
+      return statistics
     },
   },
   props: {
