@@ -200,6 +200,10 @@ input {
   }
 }
 
+button[type="submit"] {
+  margin: 2em auto 0;
+}
+
 ul {
   margin-bottom: 1.5em;
   list-style: none;
@@ -241,6 +245,10 @@ ul {
 .formButtonsContainer {
   display: flex;
   align-items: center;
+
+  button[type="submit"] {
+    margin-top: 0;
+  }
 
   &_topOffset {
     margin-top: 2em;
@@ -295,6 +303,11 @@ section {
   }
 }
 
+img {
+  display: block;
+  max-width: 100%;
+}
+
 .datepicker-holder {
 
   svg[data-icon="calendar-alt"] {
@@ -310,8 +323,21 @@ section {
   margin-bottom: 1em;
 }
 
+.popupLitter form {
+  height: 100%;
+  margin: 0;
+}
+
 .actions {
-  margin-bottom: 2em;
+  
+  @media (--from-tablet) {
+    margin-bottom: 2em;
+  }
+
+  @media (--until-tablet) {
+    flex-wrap: wrap;
+    margin-bottom: 1.25em;
+  }
 
   &_near {
     margin-bottom: 1em;
@@ -319,13 +345,16 @@ section {
 
   input {
     margin: 0;
+    background-color: transparent;
   }
 
   .fieldContainer {
     width: auto;
     margin-left: auto;
 
-    min-width: 360px;
+    @media (--from-tablet) {
+      min-width: 360px;
+    }
   }
 }
 
@@ -333,11 +362,23 @@ section {
   display: flex;
   align-items: center;
 
+  @media (--until-tablet) {
+    flex-wrap: wrap;
+  }
+
   input {
     width: auto;
     margin-bottom: 0;
-    margin-left: 10px;
     padding-top: 5px;
+
+    @media (--from-tablet) {
+      margin-left: 10px;
+    }
+
+    @media (--until-tablet) {
+      margin-left: 0 !important;
+      width: 100%;
+    }
   }
 }
 
