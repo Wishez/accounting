@@ -2,12 +2,15 @@
   <section class="litter">
     <h1>Фильтр</h1>
 
-    <div class="fields">
+    <div v-if="!queryType || defaultValue" class="fields">
       <div class="datepicker-holder">
         <base-dropdown
-          :options="accountCategories || transactionsTypes"
+          :options="types"
+          :defaultValue="defaultValue"
           @selected="validateSelection"
           placeholder="Тип транзакции"
+          :filterValue="$store.state.accountFilter.type"
+          withFilter
         />
 
         <span class="clear-action-holder">
@@ -17,25 +20,44 @@
         </span>
       </div>
       
-
       <no-ssr>
         <div class="datepicker-holder">
           <VueDatePicker
-            v-model="date"
-            id="date"
-            name="date"
-            :locale="localeCalender"
+            v-model="sinceDate"
+            id="sinceDate"
+            name="sinceDate"
             color="#de1f24"
             buttonCancel="Отмена"
-            placeholder="Месяц года"
-            @onChange="onChangeDate"
+            placeholder="Месяц (От)"
+            @onChange="onChangeDate('sinceDate')"
             type="month"
             noHeader
             fullscreenMobile
           />
 
           <span class="clear-action-holder">
-            <base-button :action="clearDate" unstyled>
+            <base-button :action="clearDate('sinceDate')" unstyled>
+              <fa-icon :icon="['fas', 'times']" />
+            </base-button>
+          </span>
+        </div>
+
+        <div class="datepicker-holder">
+          <VueDatePicker
+            v-model="untilDate"
+            id="untilDate"
+            name="untilDate"
+            color="#de1f24"
+            buttonCancel="Отмена"
+            placeholder="Месяц (По)"
+            @onChange="onChangeDate('untilDate')"
+            type="month"
+            noHeader
+            fullscreenMobile
+          />
+
+          <span class="clear-action-holder">
+            <base-button :action="clearDate('untilDate')" unstyled>
               <fa-icon :icon="['fas', 'times']" />
             </base-button>
           </span>
@@ -49,8 +71,7 @@
 
 <script>
 import { getTransactionsTypesGql } from '~/constants/gql'
-import { localeCalender } from '~/constants/date'
-console.log('localeCalender', localeCalender)
+
 export default {
   name: "AccountFilter",
   apollo: {
@@ -71,10 +92,26 @@ export default {
     accountCategories: Array,
   },
 
+  computed: {
+    types() {
+      return this.accountCategories || this.transactionsTypes
+    },
+
+    queryType() {
+      return this.$route.query.type
+    },
+
+    defaultValue() {
+      const defaultType = this.queryType
+      return this.types.find(({ slug }) => slug === defaultType)
+    }
+  },
+
   data: () => ({
-    date: undefined,
-    localeCalender,
+    untilDate: undefined,
+    sinceDate: undefined,
   }),
+
   methods: {
     changeFilter(filterKey, payload) {
       this.$store.commit('accountFilter/changeFilter', {
@@ -83,29 +120,32 @@ export default {
       })
       this.$emit('change', payload)
     },
+
     validateSelection(selection) {
       this.changeFilter('type', selection)
     },
 
-    onChangeDate() {
-      this.changeFilter('date', this.date)
+    onChangeDate(dateFieldName) {
+      this.changeFilter(dateFieldName, this[dateFieldName])
     },
 
     clearFilter() {
-      this.clearDate()
       this.clearType()
+      this.clearDate()
     },
     
-    clearDate() {
-      this.date = undefined
-      this.changeFilter('date')
+    clearDate(dateFieldName) {
+      return () => {
+        this[dateFieldName] = undefined
+        this.changeFilter(dateFieldName)
+      }
     },
 
     clearType() {
       this.changeFilter('type', {})
     }
   },
-  beforeCreate() {},
+
   created() {
     const { date } = this.$store.state.accountFilter
     this.date = date ? new Date(date) : date
