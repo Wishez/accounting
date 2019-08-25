@@ -1,10 +1,10 @@
 <template>
-  <section>
+  <section class="transactionTypesContainer">
     <h1>Типы транзакций</h1>
 
     <div class="actions_near">
       <base-button :action="toggleTransactionTypes" class="action-button" unstyled>
-        {{isDeletedShown ? 'Действующие' : 'Удалённые' }} типы
+        Посмотреть {{isDeletedShown ? 'действующие' : 'удалённые' }} типы
       </base-button>
     </div>
 
@@ -16,7 +16,7 @@
       </li>
     </ul>
     <loader v-else-if="this.$apollo.queries.transactionsTypes.loading" />
-    <p v-else>Нет доступных типов</p>
+    <p v-else>Нет {{isDeletedShown ? 'удалённых' : 'созданных'}} типов</p>
 
     <modal-container :onClose="refetchTransactionTypes" :isShown="$store.state.popups[transactionTypePopupName]">
       <transaction-type-form />
@@ -89,12 +89,16 @@ export default {
 
 <style lang="scss" scoped>
 .transactionTypes {
-  display: flex;
   margin: 0 -.5em 1em;
-  min-height: 62px;
+  display: flex;
+  flex-wrap: wrap;
 }
 
 .transactionType {
   margin: 0 .5em 1em;
+}
+
+.transactionTypesContainer {
+  min-height: 151px;
 }
 </style>
