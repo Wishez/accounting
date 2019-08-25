@@ -1,4 +1,5 @@
 import Vue from 'vue'
+import moment from "moment";
 import get from 'lodash/get'
 import unionBy from 'lodash/unionBy'
 import uniqueId from 'lodash/uniqueId'
@@ -7,6 +8,7 @@ import isEmpty from 'lodash/isEmpty'
 import pick from 'lodash/pick'
 import last from 'lodash/last'
 import mapValues from 'lodash/mapValues'
+import upperFirst from 'lodash/upperFirst'
 import cyrillicToTranslit from 'cyrillic-to-translit-js'
 import { moneyConfig } from '~/constants/config'
 
@@ -107,6 +109,34 @@ const getNumberFromMoney = value => {
 const translitCompiler = cyrillicToTranslit()
 const transliteText = (value, delimiters) => translitCompiler.transform(value.toLowerCase(), delimiters) 
 
+const getTime = date => new Date(date).getTime()
+
+const isDateInRange = (until, since) => {
+  const untilTime = getTime(until)
+  const sinceTime = getTime(since)
+  const shouldCheckBoth = until && since
+  return date => {
+    const dateTime = getTime(date)
+    const lessThanUntil = dateTime <= untilTime
+    const moreThanSinceDate = dateTime >= sinceTime
+    if (shouldCheckBoth) return lessThanUntil && moreThanSinceDate
+    else if (until) return lessThanUntil
+    else if (since) return moreThanSinceDate
+    
+    return true
+  }
+}
+
+const sortByDate = (items, dateFieldName) => items.sort((a, b) => getTime(b[dateFieldName]) - getTime(a[dateFieldName]))
+
+export const formatDate = (date, format = "L") => {
+  if (typeof date === "string") {
+    date = date.replace(/[-\.]/g, "/");
+  }
+
+  return moment(date).locale('ru').format(format);
+}
+
 Vue.prototype.$lodash = {
   get,
   getHexFromHsl,
@@ -121,4 +151,8 @@ Vue.prototype.$lodash = {
   pick,
   last,
   mapValues,
+  upperFirst,
+  sortByDate,
+  formatDate,
+  isDateInRange,
 }
