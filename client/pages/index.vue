@@ -14,50 +14,59 @@
 
     <section class="accountsTiles">
       <h1 class="accountsTitle">Счета</h1>
-    
-      <div class="actions_near">
+
+      <loader v-if="isSearchLoading" />
+
+      <div class="actions_near actions accounts-actions">
         <base-button :action="toggleAccounts" class-name="action-button" unstyled>
-            {{isDeletedShown ? 'Действующие' : 'Удалённые'}} счета
+            Посмотреть {{isDeletedShown ? 'действующие' : 'удалённые'}} счета
         </base-button>
+
+        <base-field
+          v-model="nameFilterValue"
+          name="nameFilter"
+          id="nameFilter"
+          autocomplete="off"
+          placeholder="Иван Васильевич"
+          :icon="['fas', 'search']"
+        />
       </div>
     
-      <transition name="fading">
-        <ul v-if="$lodash.get(accounts, 'length', 0)" class="accounts">
-          <li
-            v-for="({ id, name, transactions, slug }, index) in accounts"
-            :key="index"
-            class="accountTile"
-          >
-            <h2 class="accountTile__name">
-              <n-link :to="`/account/${slug}/`" class="accountLink">{{ name }}</n-link>
-            </h2>
+      <ul v-if="$lodash.get(accounts, 'length', 0)" class="accounts">
+        <li
+          v-for="({ id, name, transactions, slug }, index) in accounts.filter(({ name }) => name.indexOf(searchName) !== -1)"
+          :key="index"
+          class="accountTile"
+        >
+          <h2 class="accountTile__name">
+            <n-link :to="`/account/${slug}/`" class="accountLink">{{ name }}</n-link>
+          </h2>
 
-            <h3>Транзакции</h3> 
-            <ul v-if="$lodash.unionBy(transactions, 'type.id').length" class="actions">
-              <li v-for="({ type }, index) in $lodash.unionBy(transactions, 'type.id')" :key="index" class="action-button">
-                <n-link :to="`/account/${slug}?type=${type.slug}`" class="transactionType">
-                    {{type.name}}
-                </n-link>
-              </li>
-            </ul>
-            <p v-else>Нет транзакций</p>
+          <h3>Транзакции</h3> 
+          <ul v-if="$lodash.unionBy(transactions, 'type.id').length" class="actions">
+            <li v-for="({ type }, index) in $lodash.unionBy(transactions, 'type.id')" :key="index" class="action-button">
+              <n-link :to="`/account/${slug}?type=${type.slug}`" class="transactionType">
+                  {{type.name}}
+              </n-link>
+            </li>
+          </ul>
+          <p v-else>Нет транзакций</p>
 
-            <h3 class="statisticsHeading">Статистика</h3>
-            <base-statistics :transactions="transactions" />
+          <h3 class="statisticsHeading">Статистика</h3>
+          <base-statistics :transactions="transactions" />
 
-            <div class="formButtonsContainer formButtonsContainer_topOffset">
-              <base-button :action="editAccount({ id, name, slug })" class-name="action-button" unstyled>
-                Редактировать
-              </base-button>
-              <base-button :action="deleteAccount(id)" class-name="action-button" unstyled>
-                {{accountDeleteButtonText}}
-              </base-button>
-            </div>
-          </li>
-        </ul>
-        <loader v-else-if="this.$apollo.queries.accounts.loading" />
-        <p v-else class="empty-items">Нет {{isDeletedShown ? 'удалённых' : 'доступных'}} счетов</p>
-      </transition>
+          <div class="formButtonsContainer formButtonsContainer_topOffset">
+            <base-button :action="editAccount({ id, name, slug })" class-name="action-button" unstyled>
+              Редактировать
+            </base-button>
+            <base-button :action="deleteAccount(id)" class-name="action-button" unstyled>
+              {{accountDeleteButtonText}}
+            </base-button>
+          </div>
+        </li>
+      </ul>
+      <loader v-else-if="this.$apollo.queries.accounts.loading" />
+      <p v-else class="empty-items">Нет {{isDeletedShown ? 'удалённых' : 'доступных'}} счетов</p>
     </section>
 
     <modal-container :isShown="$store.state.popups[accountPopupName]" :onClose="refetchUpdatedAccounts">
@@ -70,6 +79,7 @@
 import { ModalContainer, AccountForm, TransactionTypes } from '~/components'
 import { popupsNames } from '~/constants/popups'
 import { getAccountsRequestGql, deleteAccountGql } from '~/constants/gql'
+import { pluck, debounceTime, map, of } from 'rxjs/operators'
 
 const accountPopupName = popupsNames.ACCOUNT
 const transactionTypePopupName = popupsNames.TRANSACTION_TYPE
@@ -98,6 +108,9 @@ export default {
       accountPopupName,
       isDeletedShown: false,
       accountDeleteButtonText: 'Удалить',
+      searchName: '',
+      nameFilterValue: '',
+      isSearchLoading: false,
     }
   },
 
@@ -149,8 +162,25 @@ export default {
   
         if (result.isSuccess) this.refetchAccounts()
       }
-    }
+    },
   },
+
+  subscriptions() {
+    return {
+      $searchName: this.$watchAsObservable('nameFilterValue').pipe(
+        map((value) => {
+          this.isSearchLoading = true
+          return value
+        }),
+        debounceTime(500),
+        pluck('newValue'),
+        map(value => {
+          this.searchName = value
+          this.isSearchLoading = false
+        })
+      ),
+    }
+  }
 }
 </script>
 
@@ -179,10 +209,6 @@ export default {
   margin: 0 10px 1em;
   background-color: #fff;
 
-  @media (--from-tablet) {
-    max-width: 50%;
-  }
-
   @media (--until-tablet) {
     flex-basis: 100%;
   }
@@ -194,6 +220,11 @@ export default {
 }
 .accountsTiles {
   min-height: 438px;
+}
+
+.accounts-actions {
+  display: flex;
+  align-items: flex-end;
 }
 </style>
 
