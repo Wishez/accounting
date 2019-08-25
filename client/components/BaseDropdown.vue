@@ -1,15 +1,26 @@
 <template>
-  <div class="dropdown" v-if="options">
+  <div
+    v-if="options"
+    :class="{ 
+      dropdown: true,
+      fieldContainer_inline: isInline,
+    }"
+  >
+    <label v-if="labelText" :for="`${name}Input`" :id="`${name}Label`">
+      {{labelText}}
+    </label>
     <input class="dropdown-input"
-      :name="name"
-      @focus="showOptions()"
-      @blur="exit()"
-      @keyup="keyMonitor"
       v-model="searchFilter"
+      :name="name"
+      :id="`${name}Input`"
+      :aria-describedby="`${name}Label`"
       :disabled="disabled"
       :placeholder="placeholder"
       :required="isRequired"
       autocomplete="off"
+      @focus="showOptions()"
+      @blur="exit()"
+      @keyup="keyMonitor"
     />
     
     <transition name="fadeTranslateToBottom">
@@ -37,6 +48,7 @@
         default: 'dropdown',
         note: 'Input name'
       },
+      labelText: String,
       options: {
         type: Array,
         required: true,
@@ -66,7 +78,15 @@
         note: 'Max items showing'
       },
       defaultValue: Object,
+      isInline: Boolean,
+      filterValue: Object,
+      withFilter: Boolean,
     },
+
+    updated() {
+      if (this.withFilter && this.selected.id && !this.filterValue.id) this.selectOption({})
+    },
+
     data() {
       return {
         isOptionsShown: false,
@@ -74,7 +94,7 @@
         selected: {},
       }
     },
-    created() {
+    mounted() {
       const { name } = this.defaultValue || {}
       if (name) {
         this.searchFilter = name
@@ -100,7 +120,7 @@
       selectOption(option) {
         this.selected = option;
         this.isOptionsShown = false;
-        this.searchFilter = this.selected.name;
+        this.searchFilter = this.selected.name || '';
         this.$emit('selected', this.selected);
       },
       showOptions(){
@@ -112,7 +132,7 @@
       exit() {
         this.isOptionsShown = false;
       },
-      // Selecting when pressing Enter
+      // Selecting when pressing Enter  
       keyMonitor: function(event) {
         if (event.key === "Enter" && this.filteredOptions[0])
           this.selectOption(this.filteredOptions[0]);
@@ -160,6 +180,6 @@
     background-color: #fff;
     border: 1px solid   #333;
     box-shadow: 0px 9px 15px 0px rgba(0, 0, 0, 0.2);
-    z-index: 1;
+    z-index: 10;
   }
 </style>
