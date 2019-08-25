@@ -1,19 +1,26 @@
 <template>
-  <div v-if="shouldDisplayInput">
+  <div v-if="shouldDisplayInput" :class="{
+    fieldContainer: true,
+    fieldContainer_inline: isInline,
+  }">
       <label v-if="labelText" :for="id || name" :id="`${name}Label`">
         {{labelText}}
       </label>
-      <input
-        v-bind="$attrs"
-        :value="value"
-        :placeholder="placeholder"
-        :type="type"
-        :name="name"
-        :id="id || name"
-        :aria-describedby="`${name}Label`"
-        :required="isRequired"
-        v-on="listeners"
-      />
+
+      <div class="inputContainer">
+        <input
+          v-bind="$attrs"
+          :value="value"
+          :placeholder="placeholder"
+          :type="type"
+          :name="name"
+          :id="id || name"
+          :aria-describedby="`${name}Label`"
+          :required="isRequired"
+          v-on="listeners"
+        />
+        <fa-icon v-if="icon" class="inputIcon" @click="onIconClick" :icon="icon" />
+      </div>
     </div>
 </template>
 
@@ -27,7 +34,7 @@ export default {
     },
     isRequired: {
       type: Boolean,
-      default: true,
+      default: false,
     },
     type: {
       type: String,
@@ -38,7 +45,14 @@ export default {
     value: String,
     placeholder: String,
     labelText: String,
+    icon: Array,
+    onIconClick: {
+      type: Function,
+      default: () => {},
+    },
+    isInline: Boolean,
   },
+
   computed: {
     listeners() {
       return Object.assign({}, this.$listeners, {
@@ -49,5 +63,23 @@ export default {
 }
 </script>
 
-<style lang="sass" scoped>
+<style lang="scss" scoped>
+.fieldContainer {
+  width: 100%;
+
+  &_inline {
+    
+  }
+}
+.inputContainer {
+  position: relative;
+  width: 100%;
+}
+
+.inputIcon {
+  position: absolute;
+  top: .8em;
+  right: .5em;
+}
+
 </style>
