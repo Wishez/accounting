@@ -111,7 +111,7 @@ class AccountingAPI extends RESTDataSource {
         name,
         color,
         slug,
-     },
+      },
     })
     return AccountingAPI.getItemResponse(result, AccountingAPI.reduceAccount)
   }
