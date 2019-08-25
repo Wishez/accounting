@@ -6,6 +6,7 @@
       v-if="isShown"
       :class="`popup ${containerClass ? ' '+containerClass : ''}`"
       role="presentation"
+      @click.self="closeModal"
     >
       <!-- begin litter -->
       <section
@@ -103,7 +104,7 @@ export default {
         this.$store.commit('popups/clearPopupPayload')
       }
     }
-  }
+  },
 };
 </script>
 
