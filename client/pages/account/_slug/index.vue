@@ -20,7 +20,7 @@
           </div>
         </h1>
 
-        <div class="actions_near">
+        <div class="actions">
           <base-button :action="toggleTransactions" class="action-button" unstyled>
             {{isDeletedTransactionsShown ? 'Действующие' : 'Удалённые'}} транзакиции
           </base-button>
@@ -30,11 +30,11 @@
       </div>
 
       <ul v-if="categories.length" class="account-transactions-categories">
-        <li v-for="({ typeName, name, items, transactions }, index) in categories" :key="index + updateCount" class="account-transactions-category litter">
-          <h2>{{typeName}}</h2>
+        <li v-for="({ date, name, transactions }, index) in categories" :key="index + updateCount" class="account-transactions-category litter">
+          <h2>{{date | formatDate('DD MMMM YYYY')}}</h2>
           
-          <div v-for="(subTransactions, index) in Object.values(transactions)" :key="index + updateCount">
-            <h3>{{subTransactions.date | formatDate('DD MMMM YYYY')}}</h3>
+          <div v-for="({ items, typeName }, index) in Object.values(transactions)" :key="index + updateCount">
+            <h3>{{typeName}}</h3>
 
             <div class="account-transactions-header">
               <span class="head head_category">Категория</span>
@@ -43,7 +43,7 @@
               <span class="head head_statistics">Статистика</span>
             </div>
             <ul class="account-transactions-list">
-              <li v-for="(transaction, index) in subTransactions.items" :key="index + updateCount" class="account-transaction-item">
+              <li v-for="(transaction, index) in items" :key="index + updateCount" class="account-transaction-item">
                 <base-button class="account-transaction" :action="editTransaction(transaction)" unstyled>
                   <h3>{{transaction.category}}</h3>
                   <span>{{transaction.branch}}</span>
@@ -171,27 +171,28 @@ export default {
       const categories = Object.values(get(account, 'transactions', []).reduce((result, transaction) => {
         const { category, type, date } = transaction
         const typeId = type.id
+        console.log(date, isDateInRange(date))
         if ((filterTypeId && typeId !== filterTypeId) || !isDateInRange(date)) return result
 
-        const transactionsMemorized = get(result, `${typeId}.transactions`, {}) 
-        const itemsDated = get(transactionsMemorized, `${date}.items`, [])
+        const transactionsMemorized = get(result, `${date}.transactions`, {}) 
+        const itemsTyped = get(transactionsMemorized, `${typeId}.items`, []) 
         const transactions = {
           ...transactionsMemorized,
-          [date]: {
-            date: date,
+          [typeId]: {
+            typeName: type.name,
             items: [
-              ...itemsDated,
+              ...itemsTyped,
               transaction,
             ],
-          }
+          },
         }
         return {
           ...result,
-          [typeId]: {
-            typeName: type.name,
+          [date]: {
             typeId,
+            date,
             transactions,
-          }
+          },
         }
       }, {}))
 
@@ -220,24 +221,15 @@ export default {
         this.statistics = []
       }
 
-      this.categories = [...categories]
-      this.updateCount += 1
+      this.categories = categories
     },
 
     setPeriod(categories) {
-      const { last, get } = this.$lodash 
-      const firstCategory = categories[0]
-      const lastCategory = last(categories)
-      const firstCategoryDates = Object.keys(firstCategory.transactions)
-      const untilDate = firstCategoryDates[0]
-      if (firstCategory.typeName === lastCategory.typeName) {
-        this.sinceDate = last(firstCategoryDates)
-        this.untilDate = untilDate
-      } else {
-        const lastCategoryDates = Object.keys(lastCategory.transactions)
-        this.sinceDate = last(lastCategoryDates)
-        this.untilDate = untilDate
-      }
+      const { last, get } = this.$lodash
+      const untilDate = get(categories, '0.date')
+      const sinceDate = get(last(categories), 'date')
+      this.sinceDate = sinceDate
+      this.untilDate = untilDate
     },
 
     setStatistics(categories) {
