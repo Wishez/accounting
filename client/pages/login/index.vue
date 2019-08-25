@@ -7,24 +7,7 @@
       </label>
       <input v-model="credentials.email" type="email" name="email" placeholder="ivan@ortgraph.ru" aria-describedby="emailLabel" required />
 
-      <label for="password" id="passwordLabel">
-        Пароль
-      </label>
-      <div class="passwordInputContainer">
-        <input
-          v-model="credentials.password"
-          :type="passwordFieldType"
-          id="password"
-          class="passwordInput"
-          name="password"
-          aria-describedby="passwordLabel"
-          placeholder="secretWords"
-          required
-          minlength="8"
-          maxlength="32"
-        />
-        <fa-icon class="passwordIcon" @click="changePasswordFieldView" :icon="['fas', passwordFieldType === 'password' ? 'eye-slash' : 'eye']" />
-      </div>
+      <password-field :defaultValue="credentials.password" @passwordChanged="value => credentials.password = value" />
 
       <p v-if="isError" class="error">{{errorMessage}}</p>
 
@@ -37,10 +20,7 @@
 
 <script>
 import { authenticateUserGql } from '~/constants/gql'
-const passwordTogglingMap = {
-  password: 'text',
-  text: 'password',
-}
+import { fetechUserProfile } from '~/constants/user'
 
 export default {
   computed: {
@@ -49,9 +29,8 @@ export default {
     }
   },
   data: () => ({
-    passwordFieldType: 'password',
     credentials: {
-      password:  'rootroot',
+      password: 'rootroot',
       email: 'shiningfinger@list.ru',
     },
     isError: false,
@@ -67,11 +46,10 @@ export default {
         .catch(() => this.handleError('Неудалось авторизоваться'))
         const email = this.$lodash.get(response, 'email')
         if (email) {
-          const { access, refresh, detail, email } = response
+          fetechUserProfile.call(this, email)
+          const { access, refresh } = response
           this.$cookies.set('access_token', access)
           this.$cookies.set('refresh_token', refresh)
-          this.$store.commit('auth/setLoggedInState', true)
-          this.$apolloHelpers.onLogin(access)
           this.$router.push('/')
         }
       } catch (e) {
@@ -82,30 +60,9 @@ export default {
       this.errorMessage = message
       this.isError = true
     },
-    changePasswordFieldView() {
-      this.passwordFieldType = passwordTogglingMap[this.passwordFieldType]
-    }
   },
   beforeMount() {
     if (this.isLoggedIn) this.$router.push('/')
   },
 }
 </script>
-
-<style lang="scss" scoped>
-.passwordInputContainer {
-  position: relative;
-  width: 100%;
-  margin-bottom: 2em;
-}
-
-.passwordInput {
-  margin-bottom: 0;
-}
-
-.passwordIcon {
-  position: absolute;
-  bottom: .5em;
-  right: .5em;
-}
-</style>
