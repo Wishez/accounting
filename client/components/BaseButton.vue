@@ -3,6 +3,7 @@
     :class="{
       'unstyledButton': unstyled,
       'button': !unstyled,
+      'button_small': isSmall,
       [`button_${modifier}`] : modifier && !unstyled,
       [className]: className,
     }"
@@ -68,6 +69,7 @@ export default {
       required: false,
       default: false
     },
+    isSmall: Boolean,
   },
   data: () => ({
     pressed: false
@@ -94,6 +96,7 @@ export default {
 </script>
 <style lang="sass" scoped>
   @import '~/assets/styles/config/_easing.sass'
+
   @import '~/assets/styles/config/_colors.sass'
 
   .unstyledButton
@@ -102,6 +105,8 @@ export default {
 
   button
     cursor: pointer
+    font-size: 1em
+    font-family: 'PT Sans'
     &:disabled
       opacity: .5
       cursor: default
@@ -121,6 +126,9 @@ export default {
     will-change: transform
     transform-style: preserve-3d
     border: 0
+
+    &_small
+      font-size: 0.83em
 
     &_red
       background-color: $red
