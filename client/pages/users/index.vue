@@ -2,7 +2,6 @@
   <div v-if="auth.isUserAdmin" class="container">
     <div class="actions">
       <base-button :action="openUserDialog" class="action-button" unstyled>Создать пользователя</base-button>
-      <base-button :action="toggleUsers" class="action-button" unstyled>{{isDeletedShown ? 'Действующие' : 'Удалённые'}} пользователи</base-button>
     
       <base-field
         v-model="nameFilterValue"
@@ -16,6 +15,9 @@
 
     <section class="users-section">
       <h1>Пользователи</h1>
+      <div class="actions_near">
+        <base-button :action="toggleUsers" class="action-button" unstyled>{{isDeletedShown ? 'Действующие' : 'Удалённые'}} пользователи</base-button>
+      </div>
       <loader v-if="isSearchLoading" />
       <ul v-if="$lodash.get(profiles, 'length', 0)" class="users-list">
         <li
@@ -105,6 +107,7 @@ export default {
       },
     }
   },
+
   data: () => ({
     RolesMap,
     Roles,
@@ -280,10 +283,17 @@ p {
   background-color: white;
   border: 2px dashed $darkGray; 
 
+  &:first-child {
+    margin-top: 0;
+  }
+
   @media (--from-tablet) {
     flex-basis: 33%;
     margin: .5em;
-    max-width: calc(50% - 1em);
+  }
+
+  @media (--until-tablet) {
+    margin: .5em 0;
   }
   
   button {
@@ -296,6 +306,10 @@ p {
   margin-top: auto;
   display: flex;
   align-items: center;
+
+  @media (--until-tablet) {
+    margin-top: 1.5em;
+  }
 
   button {
     margin-top: 0;

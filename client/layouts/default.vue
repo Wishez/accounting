@@ -135,7 +135,13 @@ export default {
 @import '~/assets/styles/config/_colors.sass';
 @import '~/assets/styles/base.scss';
 .holder {
-    padding-bottom: 141px;
+  @media (--from-tablet) {
+    padding-bottom: 104px;
+  }
+
+  @media (--until-tablet) {
+    padding-bottom: 83px;
+  }
 }
 
 header {

@@ -130,6 +130,7 @@ export default {
   transition-duration: 300ms
   transition-timing-function: $standart
   position: relative
+
   
   @media (--from-mobile)
     height: auto
@@ -140,9 +141,10 @@ export default {
     width: 100%
   
   &__closeButton
+    padding: 0 .5em;
     position: absolute;
-    top: 50px;
-    right: 1em;
+    top: 25px;
+    right: .5em;
     transition: color .2s $standart
     font-size: 2em;
 
