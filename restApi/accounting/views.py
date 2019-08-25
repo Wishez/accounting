@@ -24,8 +24,9 @@ class BaseAPIView(APIView):
 
     def post(self, request):
         data = request.data
-        payload = data.get('payload')
         self.validate_request_properties(data)
+
+        payload = data.get('payload')
         serializer = self.PostSerializer(data=payload)
         serializer.request_data = data
         serializer.is_valid(raise_exception=True)
@@ -74,13 +75,12 @@ def make_serializer_list(request, Model, Serializer, PostSerializer=None):
 
     elif request.method == 'POST':
         data = JSONParser().parse(request)
-        serializer = Serializer(data=data)
-        if serializer.is_valid():
-            serializer.request_data = data
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        payload = data.get('payload')
+        serializer = Serializer(data=payload)
+        serializer.request_data = data
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 @api_view(['GET', 'POST'])
 def account_list(request):
