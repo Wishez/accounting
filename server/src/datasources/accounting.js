@@ -2,6 +2,18 @@ const { RESTDataSource } = require('apollo-datasource-rest');
 const env = require('../env')
 const isArray = require('lodash/isArray')
 
+const getTime = (item, dateFieldName) => new Date(item[dateFieldName]).getTime()
+const sortByDate = (items, dateFieldName) => {
+  if (!dateFieldName) return items
+
+  return items.sort((a, b) => {
+    const differance = getTime(b, dateFieldName) - getTime(a, dateFieldName)
+    if (differance === 0) return b.order - a.order
+
+    return differance
+  })
+}
+
 class AccountingAPI extends RESTDataSource {
   constructor() {
     super()
@@ -12,17 +24,24 @@ class AccountingAPI extends RESTDataSource {
     if (this.context.isAuth) request.headers.set('Authorization', `Bearer ${this.context.token}`);
   }
 
-  async getAccount(slug) {
+  async getAccount({ slug, isDeletedTransactionsShown }) {
     const result = await this.get(`account/${slug}/`)
-    return AccountingAPI.getItemResponse(result, AccountingAPI.reduceAccount)
+    return AccountingAPI.getItemResponse(result, AccountingAPI.reduceAccount, isDeletedTransactionsShown)
   }
 
-  static reduceAccount(account) {
+  static reduceAccount(account, isDeletedTransactionsShown) {
     if (!account.uuid) return null
 
+    const transactions = []
+    account.transactions.forEach((transaction) => {
+      const { is_deleted } = transaction
+      if (isDeletedTransactionsShown === true ? is_deleted : !is_deleted) {
+        transactions.push(AccountingAPI.reduceAccountTransaction(transaction))
+      }
+    })
     return {
       ...AccountingAPI.reduceTransactionAccount(account),
-      transactions: account.transactions.map(AccountingAPI.reduceAccountTransaction),
+      transactions: sortByDate(transactions, 'date'),
     }
   }
 
@@ -40,6 +59,7 @@ class AccountingAPI extends RESTDataSource {
       order,
       note,
       transactionType,
+      is_deleted = false,
     } = transaction
     return {
       id: uuid,
@@ -52,43 +72,52 @@ class AccountingAPI extends RESTDataSource {
       date,
       order,
       consumption,
+      isDeleted: is_deleted,
     }
   }
 
   static reduceTransactionType(transactionType) {
     if (!transactionType.uuid) return null
 
-    const { color, name, uuid, slug } = transactionType
+    const { color, name, uuid, slug, is_deleted = false } = transactionType
     return {
       id: uuid,
       color,
       name,
       slug,
+      isDeleted: is_deleted,
     }
   }
 
-  async getAccounts() {
+  async getAccounts(isDeletedShown) {
     const results = await this.get('accounts/')
-    return AccountingAPI.getListResponse(results, AccountingAPI.reduceAccount)
+    return AccountingAPI.getListResponse(results, AccountingAPI.reduceAccount, undefined, isDeletedShown)
   }
 
-  static getListResponse(results, reduce) {
+  static getListResponse(results, reduce, dateFieldName, isDeletedShown) {
     const isSuccess = isArray(results)
+    const data = results.filter(({ is_deleted }) => isDeletedShown ? is_deleted : !is_deleted).map(reduce)
     return {
       isSuccess,
       details: isArray ? null : results,
-      data: results.map(reduce),
+      data: data ? sortByDate(data, dateFieldName) : null,
     }
   }
 
   async createAccount(payload) {
     const { name, color, slug } = payload
-    const result = await this.post('accounts/', { name, color, slug })
+    const result = await this.post('accounts/', { 
+      payload: {
+        name,
+        color,
+        slug,
+     },
+    })
     return AccountingAPI.getItemResponse(result, AccountingAPI.reduceAccount)
   }
 
-  static getItemResponse(result, reduce) {
-    const entity = reduce(result)
+  static getItemResponse(result, reduce, isDeletedTransactionsShown) {
+    const entity = reduce(result, isDeletedTransactionsShown)
     const isSuccess = Boolean(entity)
     return {
       isSuccess,
@@ -117,8 +146,8 @@ class AccountingAPI extends RESTDataSource {
     return AccountingAPI.getItemResponse(result, AccountingAPI.reduceAccount)
   }
 
-  async deleteAccounts(uuid) {
-    const result = await this.delete(`accounts/${uuid}/`)
+  async deleteAccount(uuid) {
+    const result = await this.patch(`accounts/${uuid}/`)
     return AccountingAPI.getDeleteItemResponse(result)
   }
 
@@ -131,9 +160,9 @@ class AccountingAPI extends RESTDataSource {
     }
   }
 
-  async getTransactions() {
+  async getTransactions(isDeletedShown) {
     const results = await this.get('transactions/')
-    return AccountingAPI.getListResponse(results, AccountingAPI.reduceTransaction)
+    return AccountingAPI.getListResponse(results, AccountingAPI.reduceTransaction, undefined, isDeletedShown)
   }
   
   static reduceTransaction(transaction) {
@@ -147,16 +176,17 @@ class AccountingAPI extends RESTDataSource {
 
   static reduceTransactionAccount(account) {
     if (!account.uuid) return null
-    const { color, uuid, name, slug } = account
+    const { color, uuid, name, slug, is_deleted = false } = account
     return {
       id: uuid,
       slug,
       color,
       name,
+      isDeleted: is_deleted,
     }
   }
 
-  async getTransaction(uuid) {
+  async getTransaction({ uuid }) {
     const result = await this.get(`transactions/${uuid}/`)
     return AccountingAPI.getItemResponse(result, AccountingAPI.reduceTransaction)
   }
@@ -178,15 +208,17 @@ class AccountingAPI extends RESTDataSource {
     const result = await this.post('transactions/', {
       accountId,
       transactionTypeId,
-      balance,
-      profit,
-      consumption,
-      order,
-      branch,
-      note,
-      date,
-      category,
-      slug,
+      payload: {
+        balance,
+        profit,
+        consumption,
+        order,
+        branch,
+        note,
+        date,
+        category,
+        slug,
+      },
     })
     return AccountingAPI.getItemResponse(result, AccountingAPI.reduceTransaction)
   }
@@ -218,21 +250,23 @@ class AccountingAPI extends RESTDataSource {
   }
 
   async deleteTransaction(uuid) {
-    const result = await this.delete(`transactions/${uuid}/`)
+    const result = await this.patch(`transactions/${uuid}/`)
     return AccountingAPI.getDeleteItemResponse(result)
   }
 
-  async getTransactionsTypes() {
+  async getTransactionsTypes(isDeletedShown) {
     const results = await this.get('transactions/types/')
-    return AccountingAPI.getListResponse(results, AccountingAPI.reduceTransactionType)
+    return AccountingAPI.getListResponse(results, AccountingAPI.reduceTransactionType, undefined, isDeletedShown)
   }
 
   async createTransactionType(payload) {
     const { name, color, slug } = payload
     const result = await this.post(`transactions/types/`, {
-      name,
-      color,
-      slug,
+      payload: {
+        name,
+        color,
+        slug,
+      }
     })
     return AccountingAPI.getItemResponse(result, AccountingAPI.reduceTransactionType)
   }
@@ -248,28 +282,28 @@ class AccountingAPI extends RESTDataSource {
   }
 
   async deleteTransactionType(uuid) {
-    const result = await this.delete(`transactions/types/${uuid}/`)
+    const result = await this.patch(`transactions/types/${uuid}/`)
     return AccountingAPI.getDeleteItemResponse(result)
   }
 
-  async getProfile(email) {
+  async getProfile({ email }) {
     const result = await this.get('profile/', { email })
     return AccountingAPI.getItemResponse(result, AccountingAPI.reduceProfile)
   }
 
-  async getTransactionType(slug) {
+  async getTransactionType({ slug }) {
     const result = await this.get(`transactions/type/${slug}/`)
     return AccountingAPI.getItemResponse(result, AccountingAPI.reduceTransactionType)
   }
 
-  async getProfiles() {
+  async getProfiles(isDeletedShown) {
     const results = await this.get('profiles/')
-    return AccountingAPI.getListResponse(results, AccountingAPI.reduceProfile)
+    return AccountingAPI.getListResponse(results, AccountingAPI.reduceProfile, 'dateJoined', isDeletedShown)
   }
 
   static reduceProfile(profile) {
     if (!profile.uuid) return null
-    const { uuid, name, email, role, date_joined } = profile
+    const { uuid, name, email, role, date_joined, is_deleted = false } = profile
     const [firstName, middleName, lastName] = name.split(' ')
   
     const hasNotMiddleName = !lastName
@@ -278,6 +312,7 @@ class AccountingAPI extends RESTDataSource {
       firstName: `${firstName} ${hasNotMiddleName ? '' : middleName}`,
       lastName: hasNotMiddleName ? middleName : lastName,
       dateJoined: date_joined,
+      isDeleted: is_deleted,
       email,
       role,
     }
@@ -291,10 +326,12 @@ class AccountingAPI extends RESTDataSource {
       role,
     } = payload
     const result = await this.post('profile/', {
-      email,
-      password,
-      name,
-      role,
+      payload: {
+        email,
+        password,
+        name,
+        role,
+      },
     })
     return AccountingAPI.getItemResponse(result, AccountingAPI.reduceProfile)
   }
@@ -315,8 +352,8 @@ class AccountingAPI extends RESTDataSource {
     return AccountingAPI.getItemResponse(result, AccountingAPI.reduceProfile)
   }
 
-  async deleteProfile() {
-    const result = await this.delete(`profile/${uuid}/`)
+  async deleteProfile(uuid) {
+    const result = await this.patch(`profile/${uuid}/`)
     return AccountingAPI.getDeleteItemResponse(result)
   }
 }

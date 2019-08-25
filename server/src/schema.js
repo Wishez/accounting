@@ -2,12 +2,12 @@ const { gql } = require('apollo-server-express')
 
 const schemaString = gql`
     type Query {
-        profiles: ProfielesResponse!
-        accounts: AccountsResponse!
+        profiles(isDeletedShown: Boolean): ProfielesResponse!
+        accounts(isDeletedShown: Boolean): AccountsResponse!
         transactions: TransactionsResponse!
-        transactionsTypes: TransactionsTypesResponse!
+        transactionsTypes(isDeletedShown: Boolean): TransactionsTypesResponse!
 
-        account(slug: String!): AccountResponse!
+        account(slug: String!, isDeletedTransactionsShown: Boolean): AccountResponse!
         transaction(uuid: String!): TransactionResponse!
         transactionType(slug: String!): TransactionTypeResponse!
         profile(email: String!): ProfileResponse!
@@ -44,6 +44,7 @@ const schemaString = gql`
         balance: Float!
         date: String!
         order: Int
+        isDeleted: Boolean!
     }
 
     type TransactionsTypesResponse {
@@ -83,6 +84,7 @@ const schemaString = gql`
         lastName: String
         role(name: RoleName): String!
         dateJoined: String!,
+        isDeleted: Boolean!
     }
 
     enum RoleName {
@@ -97,6 +99,7 @@ const schemaString = gql`
         slug: String!
         transactions: [Transaction]!
         color: String
+        isDeleted: Boolean!
     }
 
     type TransactionAccount {
@@ -104,6 +107,7 @@ const schemaString = gql`
         slug: String!
         name: String!
         color: String
+        isDeleted: Boolean!
     }
 
     type TransactionDetail {
@@ -118,6 +122,7 @@ const schemaString = gql`
         date: String!
         order: Int
         account: TransactionAccount!
+        isDeleted: Boolean!
     }
 
     type TransactionType {
@@ -125,6 +130,7 @@ const schemaString = gql`
         name: String!
         color: String
         slug: String!
+        isDeleted: Boolean!
     }
     
     type Mutation {

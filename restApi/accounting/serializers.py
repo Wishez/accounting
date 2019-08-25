@@ -12,6 +12,7 @@ class TransactionTypeSerializer(serializers.ModelSerializer):
             'name',
             'color',
             'slug',
+            'is_deleted',
         )
 
 class UserSerializer(serializers.ModelSerializer):
@@ -25,6 +26,7 @@ class UserSerializer(serializers.ModelSerializer):
             'password',
             'role',
             'date_joined',
+            'is_deleted',
         )
         read_only_fields = (
             'uuid',
@@ -35,6 +37,28 @@ class UserSerializer(serializers.ModelSerializer):
                 'write_only': True
             }
         }
+    
+    def create(self, validated_data):
+        requestData = self.request_data
+        user = User.objects.create(**validated_data)
+        user.set_password(requestData.get('password'))
+        user.save()
+        return user
+
+    def update(self, instance, validated_data):
+        requestData = self.request_data
+        oldPassword = instance.password
+        password = requestData.get('password')
+        User.objects.filter(uuid=instance.uuid).update(**validated_data)
+        user = User.objects.filter(uuid=instance.uuid)[0]
+        
+        if password and len(password) >= 8:
+            user.set_password(password)
+        else:
+            user.password = oldPassword
+
+        user.save()    
+        return user
 
 
 class AccountTransactionSerializer(serializers.ModelSerializer):
@@ -53,6 +77,7 @@ class AccountTransactionSerializer(serializers.ModelSerializer):
             'balance',
             'date',
             'order',
+            'is_deleted',
         )
 
 updateTransactionsActions = {
@@ -70,6 +95,7 @@ class AccountSerializer(serializers.ModelSerializer):
             'name',
             'transactions',
             'color',
+            'is_deleted',
         )
     
     def create(self, validated_data):
@@ -111,6 +137,7 @@ class TransactionDetailSerializer(serializers.ModelSerializer):
             'date',
             'order',
             'account',
+            'is_deleted',
         )
         read_only_fields = (
             'uuid',
@@ -130,6 +157,8 @@ class TransactionDetailSerializer(serializers.ModelSerializer):
             raise Exception('Нет типа транзакции с uuid: %s' % transactionTypeId)
         
         transaction = Transaction.objects.create(transactionType=transactionType, account=account, **validated_data)
+
+        trnsactionDate = validated_data.get('date')
         transaction.order = len(Transaction.objects.filter(date=validated_data.get('date')))
 
         account.transactions.add(transaction)
@@ -137,8 +166,8 @@ class TransactionDetailSerializer(serializers.ModelSerializer):
     
     def update(self, instance, validated_data):
         transaction = Transaction.objects.filter(uuid=instance.uuid)
-        print('validated_data', validated_data)
         transactionTypeId = self.request_data.get('transactionTypeId')
+        transactionType = None
         if transactionTypeId:
             transactionType = TransactionType.objects.get(uuid=transactionTypeId)
             if not transactionType:
@@ -154,4 +183,4 @@ class TransactionDetailSerializer(serializers.ModelSerializer):
             order = len(Transaction.objects.filter(date=validated_data.get('date'), transactionType=transactionType))
             transaction.update(order=order)
 
-        return instance
+        return transaction[0]

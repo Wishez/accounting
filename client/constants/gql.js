@@ -10,14 +10,15 @@ export const getTransactionTypeGql = gql`
         name
         color
         slug
+        isDeleted
       }
     }
   }
 `
 
 export const getTransactionsTypesGql = gql`
-query GetTransactionsTypes{
-  transactionsTypes {
+query GetTransactionsTypes($isDeletedShown: Boolean) {
+  transactionsTypes(isDeletedShown: $isDeletedShown) {
     isSuccess
     details
     data {
@@ -25,6 +26,7 @@ query GetTransactionsTypes{
       name
       color
       slug
+      isDeleted
     }
   }
 }
@@ -39,6 +41,24 @@ export const createTransactionTypeGql = gql`
         id
         name
         color
+      }
+    }
+  }
+`
+
+export const getProfilesGql = gql`
+  query GetProfiles($isDeletedShown: Boolean) {
+    profiles(isDeletedShown: $isDeletedShown) {
+      isSuccess
+      details
+      data {
+        id
+        email
+        firstName
+        lastName
+        role
+        dateJoined
+        isDeleted
       }
     }
   }
@@ -59,6 +79,75 @@ export const getProfileGql = gql`
       }
     }
   }
+`
+
+export const createProfileGql = gql`
+  mutation CreateProfile($payload: CreateProfilePayload!) {
+    createProfile(payload: $payload) {
+      isSuccess
+      details
+      data {
+        id
+      }
+    }
+  }
+`
+
+export const updateProfileGql = gql`
+mutation UpdateProfile($uuid: String!, $payload: UpdateProfilePayload!) {
+  updateProfile(uuid: $uuid, payload: $payload) {
+    isSuccess
+    details
+    data {
+      id
+      firstName
+      lastName
+      email
+      dateJoined
+      role
+    }
+  }
+}
+`
+
+export const deleteProfileGql = gql`
+mutation DeleteProfile($uuid: String!) {
+  deleteProfile(uuid: $uuid) {
+    isSuccess
+    details
+    data
+  }
+}
+`
+
+export const deleteTransactionGql = gql`
+mutation DeleteTransaction($uuid: String!) {
+  deleteTransaction(uuid: $uuid) {
+    isSuccess
+    details
+    data
+  }
+}
+`
+
+export const deleteTransactionTypeGql = gql`
+mutation DeleteTransactionType($uuid: String!) {
+  deleteTransactionType(uuid: $uuid) {
+    isSuccess
+    details
+    data
+  }
+}
+`
+
+export const deleteAccountGql = gql`
+mutation DeleteAccount($uuid: String!) {
+  deleteAccount(uuid: $uuid) {
+    isSuccess
+    details
+    data
+  }
+}
 `
 
 export const updateTransactionGql = gql`
@@ -103,6 +192,7 @@ const transactionTile = gql`
     type {
       id
       name
+      slug
     }
     category
     branch
@@ -112,6 +202,7 @@ const transactionTile = gql`
     balance
     date
     order
+    isDeleted
   }
 `
 
@@ -145,8 +236,8 @@ export const updateTransactionTypeGql = gql`
 `
 
 export const getAccountGql = gql`
-query GetAccount($slug: String!) {
-  account(slug: $slug) {
+query GetAccount($slug: String!, $isDeletedTransactionsShown: Boolean) {
+  account(slug: $slug, isDeletedTransactionsShown: $isDeletedTransactionsShown) {
     isSuccess
     details
     data {
@@ -208,14 +299,21 @@ export const authenticateUserGql = gql`
 `
 
 export const getAccountsRequestGql = gql`
-query {
-  accounts {
+query GetAccountRequest($isDeletedShown: Boolean) {
+  accounts(isDeletedShown: $isDeletedShown) {
+    isSuccess
     data {
       id
       color
       name
       slug
+      isDeleted
       transactions {
+        profit
+        balance
+        consumption
+        order
+        date
         type {
           id
           name
