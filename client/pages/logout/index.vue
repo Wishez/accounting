@@ -8,6 +8,7 @@ export default {
     this.$cookies.remove('access_token')
     this.$cookies.remove('refresh_token')
     this.$store.commit('auth/setLoggedInState', false)
+    this.$store.commit('auth/setLoggedOutState')
     this.$apolloHelpers.onLogout()
     this.$router.push('/login')
   }
