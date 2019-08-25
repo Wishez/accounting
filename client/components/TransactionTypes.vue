@@ -1,9 +1,16 @@
 <template>
   <section>
     <h1>Типы транзакций</h1>
-    <ul v-if="(transactionsTypes || []).length" class="transactionTypes">
-      <li v-for="({ id, name, color, slug }, index) in transactionsTypes" :key="index">
-        <base-button :action="editTransactionType({ id, name, color, slug })" class-name="transactionType" :style="setTransactionTypeButtonStyle(color)">
+
+    <div class="actions_near">
+      <base-button :action="toggleTransactionTypes" class="action-button" unstyled>
+        {{isDeletedShown ? 'Действующие' : 'Удалённые' }} типы
+      </base-button>
+    </div>
+
+    <ul v-if="$lodash.get(transactionsTypes, 'length', 0)" class="transactionTypes">
+      <li v-for="({ id, name, color, slug, isDeleted }, index) in transactionsTypes" :key="index">
+        <base-button :action="editTransactionType({ id, name, color, slug, isDeleted })" class-name="transactionType" :style="setTransactionTypeButtonStyle(color)">
           {{name}}
         </base-button>
       </li>
@@ -11,7 +18,7 @@
     <loader v-else-if="this.$apollo.queries.transactionsTypes.loading" />
     <p v-else>Нет доступных типов</p>
 
-    <modal-container :onClose="() => $apollo.queries.transactionsTypes.refetch()" :isShown="$store.state.popups[transactionTypePopupName]">
+    <modal-container :onClose="refetchTransactionTypes" :isShown="$store.state.popups[transactionTypePopupName]">
       <transaction-type-form />
     </modal-container>
   </section>
@@ -35,15 +42,27 @@ export default {
     transactionsTypes: {
       query: getTransactionsTypesGql,
       update({ transactionsTypes }) {
-        return transactionsTypes.data
+        return transactionsTypes.isSuccess ? transactionsTypes.data : []
       }
     },
   },
+
   data: () => ({
     transactionTypePopupName,
+    isDeletedShown: false
   }),
 
   methods: {
+    toggleTransactionTypes() {
+      this.isDeletedShown = !this.isDeletedShown
+      this.refetchTransactionTypes()
+    },
+
+    refetchTransactionTypes() {
+      this.$apollo.queries.transactionsTypes.refetch({
+        isDeletedShown: this.isDeletedShown,
+      })
+    },
 
     openTransactionTypePopup() {
       this.$store.dispatch('popups/openPopup', transactionTypePopupName)
@@ -60,8 +79,8 @@ export default {
     },
 
     setTransactionTypeButtonStyle(backgroundColor) {
-      const { hue } = this.$lodash.getHslFromHex(backgroundColor)
-      const color = hue > 127 || hue === 0 ? '#fff' : '#333'
+      const { hue, luminosity } = this.$lodash.getHslFromHex(backgroundColor)
+      const color = hue > 127 || (hue === 0 && luminosity !== 100) ? '#fff' : '#333'
       return `background-color:${backgroundColor};color:${color}`
     }
   }
@@ -72,6 +91,7 @@ export default {
 .transactionTypes {
   display: flex;
   margin: 0 -.5em 1em;
+  min-height: 62px;
 }
 
 .transactionType {

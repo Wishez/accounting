@@ -56,25 +56,41 @@
 
     <p v-if="isError" class="error">{{errorMessage}}</p>
 
-    <base-button type="submit">
-      Сохранить
-    </base-button>
+    <div class="formButtonsContainer formButtonsContainer_topOffset">
+      <base-button type="submit" class="action-button">
+        Сохранить
+      </base-button>
+
+      <base-button v-if="isEdit" :action="deleteTransactionType" type="button" class="action-button" unstyled>
+        {{isDeleted ? 'Восстановить' : 'Удалить'}}
+      </base-button>
+    </div>
   </form>
 </template>
 
 <script>
 import ColorPicker from '@radial-color-picker/vue-color-picker'
-import { createTransactionTypeGql, updateTransactionTypeGql, getTransactionTypeGql } from '~/constants/gql'
+import { createTransactionTypeGql, updateTransactionTypeGql, getTransactionTypeGql, deleteTransactionTypeGql } from '~/constants/gql'
 import { popupsNames } from '~/constants/popups'
 
 export default {
   name: 'AccountForm',
+
   components: {
     ColorPicker
   },
+
   computed: {
     transactionType() {
       return this.$lodash.get(this.$store.state.popups.payload, popupsNames.TRANSACTION_TYPE, {})
+    },
+
+    isEdit() {
+      return Boolean(this.transactionType.id)
+    },
+
+    isDeleted() {
+      return Boolean(this.transactionType.isDeleted)
     },
 
     isLoggedIn() {
@@ -102,9 +118,11 @@ export default {
       }
     }
   },
+
   mounted() {
     this.setColor()
   },
+
   data() {
     return {
       isError: false,
@@ -126,7 +144,7 @@ export default {
   methods: {
     onSubmit() {
       this.clearErorState()
-      if (this.transactionType.id) this.updateTransactionType()
+      if (this.isEdit) this.updateTransactionType()
       else this.createTransactionType()
     },
   
@@ -180,10 +198,27 @@ export default {
         }).then(response => this.handleTransactionTypeResponse(response, requestName))
           .catch(this.showErrorTransactionTypeRequest)
 
-        if (response.id) this.$store.commit('popups/closePopups')
+        if (response.id) this.closePopup()
       } catch (e) {
         console.error(e)
       }
+    },
+
+    closePopup() {
+      this.$store.commit('popups/closePopups')
+    },
+
+    async deleteTransactionType() {
+      const result = await this.$apollo.mutate({
+        mutation: deleteTransactionTypeGql,
+        variables: {
+          uuid: this.transactionType.id,
+        }
+      })
+        .then(({ data }) => data.deleteTransactionType)
+        .catch(() => this.handleError('Не удалось удалить транзакцию'))
+      
+      if (result.isSuccess) this.closePopup()
     },
 
     handleError(message) {

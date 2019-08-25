@@ -9,42 +9,53 @@
 
     <account-filter :accountCategories="accountCategories" @change="updateCategories" />
 
-    <section>
+    <section class="account-container">
       <div class="accountHeader">
-        <h1 class="accountHeader__title">{{$lodash.get(account, 'name')}}</h1>
+        <h1 class="accountHeader__title">
+          {{$lodash.get(account, 'name')}}
+        
+          <div v-if="sinceDate && untilDate" class="transactions-period">
+            От <strong>{{sinceDate | formatDate('DD MMMM YYYY')}}</strong> 
+            по <strong>{{untilDate | formatDate('DD MMMM YYYY')}}</strong>
+          </div>
+        </h1>
+
+        <div class="actions_near">
+          <base-button :action="toggleTransactions" class="action-button" unstyled>
+            {{isDeletedTransactionsShown ? 'Действующие' : 'Удалённые'}} транзакиции
+          </base-button>
+        </div>
 
         <base-statistics hasLitter :key="updateCount" :transactions="this.statistics" :accountBalance="accountBalance" />
       </div>
 
-      <transition name="fading">
-        <ul v-if="categories.length" class="account-transactions-categories">
-          <li v-for="({ typeName, name, items, transactions }, index) in categories" :key="index + updateCount" class="account-transactions-category litter">
-            <h2>{{typeName}}</h2>
-            
-            <div v-for="(subTransactions, index) in sortByDate(Object.values(transactions))" :key="index + updateCount">
-              <h3>{{subTransactions.date | formatDate('DD MMMM YYYY')}}</h3>
+      <ul v-if="categories.length" class="account-transactions-categories">
+        <li v-for="({ typeName, name, items, transactions }, index) in categories" :key="index + updateCount" class="account-transactions-category litter">
+          <h2>{{typeName}}</h2>
+          
+          <div v-for="(subTransactions, index) in Object.values(transactions)" :key="index + updateCount">
+            <h3>{{subTransactions.date | formatDate('DD MMMM YYYY')}}</h3>
 
-              <div class="account-transactions-header">
-                <span class="head head_category">Категория</span>
-                <span class="head head_branch" >Филиал</span>
-                <span class="head head_note">Примичание</span>
-                <span class="head head_statistics">Статистика</span>
-              </div>
-              <ul class="account-transactions-list">
-                <li v-for="(transaction, index) in subTransactions.items" :key="index + updateCount" class="account-transaction-item">
-                  <base-button class="account-transaction" :action="editTransaction(transaction)" unstyled>
-                    <h3>{{transaction.category}}</h3>
-                    <span>{{transaction.branch}}</span>
-                    <span>{{transaction.note}}</span>
-                    <span><base-statistics :transactions="[transaction]" /></span>
-                  </base-button>
-                </li>
-              </ul>
+            <div class="account-transactions-header">
+              <span class="head head_category">Категория</span>
+              <span class="head head_branch" >Филиал</span>
+              <span class="head head_note">Примичание</span>
+              <span class="head head_statistics">Статистика</span>
             </div>
-          </li>
-        </ul>
-        <loader v-else-if="$apollo.queries.account.loading" />
-      </transition>
+            <ul class="account-transactions-list">
+              <li v-for="(transaction, index) in subTransactions.items" :key="index + updateCount" class="account-transaction-item">
+                <base-button class="account-transaction" :action="editTransaction(transaction)" unstyled>
+                  <h3>{{transaction.category}}</h3>
+                  <span>{{transaction.branch}}</span>
+                  <span>{{transaction.note}}</span>
+                  <span><base-statistics :transactions="[transaction]" /></span>
+                </base-button>
+              </li>
+            </ul>
+          </div>
+        </li>
+      </ul>
+      <loader v-else-if="$apollo.queries.account.loading" />
 
       <p v-if="!categories.length" class="litter">
         <span v-if="!filter.date && !filter.type.id">На счету нет транзакиций</span>
@@ -58,7 +69,7 @@
       </p>
     </section>
 
-    <modal-container :onClose="() => $apollo.queries.account.refetch()" :isShown="$store.state.popups[transactionPopupName]">
+    <modal-container :onClose="refetchTransactions" :isShown="$store.state.popups[transactionPopupName]">
       <transaction-form />
     </modal-container>
   </div>
@@ -72,6 +83,8 @@ import { pluck, map } from 'rxjs/operators'
 
 const { TRANSACTION: transactionPopupName } = popupsNames
 export default {
+  name: 'AccountPages',
+
   apollo: {
     account: {
       query: getAccountGql,
@@ -82,8 +95,8 @@ export default {
         }
       },
 
-      update(response) {
-        return response.account.data
+      update({ account }) {
+        return account.isSuccess ? account.data : {}
       } 
     },
 
@@ -97,7 +110,7 @@ export default {
       },
 
       update({ transactionType }) {
-        return this.$lodash.get(transactionType, 'isSuccess') ? transactionType.data : {}
+        return transactionType.isSuccess ? transactionType.data : {}
       },
 
       skip() {
@@ -105,7 +118,6 @@ export default {
       }
     },
   },
-
 
   components: {
     ModalContainer,
@@ -123,6 +135,9 @@ export default {
     accountBalance: 0,
     statistics: [],
     accountCategories: [],
+    isDeletedTransactionsShown: false,
+    sinceDate: undefined,
+    untilDate: undefined,
   }),
 
   computed: {
@@ -135,20 +150,30 @@ export default {
   },
 
   methods: {
+    toggleTransactions() {
+      this.isDeletedTransactionsShown = !this.isDeletedTransactionsShown
+      this.refetchTransactions()
+    },
+
+    refetchTransactions() {
+      this.$apollo.queries.account.refetch({
+        isDeletedTransactionsShown: this.isDeletedTransactionsShown,
+      })
+    },
+  
     updateCategories() {
       const { get } = this.$lodash
-      const { transactionTypeId } = this
-      const { date: filterDate, type: filterType } = this.filter
+      const { transactionTypeId, account = {} } = this
+      const { sinceDate, untilDate, type: filterType } = this.filter
       const { id: filterTypeId } = filterType
-      
-      const categories = Object.values(get(this.account, 'transactions', []).reduce((result, transaction) => {
+      const hasRangePeriod = sinceDate && untilDate
+      const isDateInRange = this.$lodash.isDateInRange(untilDate, sinceDate)
+      const categories = Object.values(get(account, 'transactions', []).reduce((result, transaction) => {
         const { category, type, date } = transaction
         const typeId = type.id
-        if ((transactionTypeId && typeId !== transactionTypeId) ||
-          (filterTypeId && typeId !== filterTypeId) ||
-          (filterDate && date.indexOf(filterDate) === -1)) return result
+        if ((filterTypeId && typeId !== filterTypeId) || !isDateInRange(date)) return result
 
-        const transactionsMemorized =get(result, `${typeId}.transactions`, {}) 
+        const transactionsMemorized = get(result, `${typeId}.transactions`, {}) 
         const itemsDated = get(transactionsMemorized, `${date}.items`, [])
         const transactions = {
           ...transactionsMemorized,
@@ -157,7 +182,7 @@ export default {
             items: [
               ...itemsDated,
               transaction,
-            ].sort((a, b) => a.order - b.order),
+            ],
           }
         }
         return {
@@ -170,41 +195,63 @@ export default {
         }
       }, {}))
 
-      const { transactions } = this.account
-      const { last, mapValues } = this.$lodash
-      const lastTransaction = this.sortByDate(transactions)[0]
+      const { transactions = [] } = account
+      const lastTransaction = transactions[0]
+      
       this.accountBalance = Number(get(lastTransaction, 'balance', 0)).toFixed(2)
       this.accountCategories = Object.values(transactions.reduce((result, { type }) => {
-        const { name, id } = type
+        const { name, id, slug } = type
         return {
           ...result,
           [id]: {
             name,
             id,
+            slug,
           }
         }
       }, {}))
 
       if (categories.length) {
-        this.statistics = categories.reduce((result, { transactions }) => {
-          let categoryTransactions = []
-          mapValues(transactions, ({ items }) => {
-            categoryTransactions = [...categoryTransactions, ...items]
-          })
-          return [
-            ...result,
-            ...categoryTransactions,
-          ]
-        }, [])
+        this.setStatistics(categories)
+        this.setPeriod(categories)
+      } else {
+        this.sinceDate = undefined
+        this.untilDate = undefined
+        this.statistics = []
       }
 
-      this.updateCount += 1
       this.categories = [...categories]
+      this.updateCount += 1
     },
 
-    sortByDate(transactions) {
-      const getTime = ({ date }) => new Date(date).getTime()
-      return transactions.sort((a, b) => getTime(b) - getTime(a))
+    setPeriod(categories) {
+      const { last, get } = this.$lodash 
+      const firstCategory = categories[0]
+      const lastCategory = last(categories)
+      const firstCategoryDates = Object.keys(firstCategory.transactions)
+      const untilDate = firstCategoryDates[0]
+      if (firstCategory.typeName === lastCategory.typeName) {
+        this.sinceDate = last(firstCategoryDates)
+        this.untilDate = untilDate
+      } else {
+        const lastCategoryDates = Object.keys(lastCategory.transactions)
+        this.sinceDate = last(lastCategoryDates)
+        this.untilDate = untilDate
+      }
+    },
+
+    setStatistics(categories) {
+      const { mapValues } = this.$lodash
+      this.statistics = categories.reduce((result, { transactions }) => {
+        let categoryTransactions = []
+        mapValues(transactions, ({ items }) => {
+          categoryTransactions = [...categoryTransactions, ...items]
+        })
+        return [
+          ...result,
+          ...categoryTransactions,
+        ]
+      }, [])
     },
 
     showError(e) {
@@ -232,14 +279,6 @@ export default {
     editTransaction(transaction) {
       return () => this.openTransactionPopup(transaction)
     },
-
-    changeType() {
-
-    },
-
-    changeDate() {
-
-    }
   },
 
   mounted() {
@@ -263,6 +302,13 @@ export default {
 <style lang="scss" scoped>
 @import '~/assets/styles/config/_colors.sass';
 
+.transactions-period {
+  font-size: 16px;
+  font-family: "PT Sans";
+  line-height: 22px;
+  margin-bottom: 5px;
+}
+
 .accountHeader {
   display: flex;
   justify-content: space-between;
@@ -272,7 +318,7 @@ export default {
   $filledSize: (1em / 24 * 10);
   &__title {
     padding: $filledSize $filledSize 9px;
-    margin: 0 #{-$filledSize};
+    margin: 0;
     background-color: $darkGray;
     color: inherit;
     z-index: 2;
@@ -297,5 +343,9 @@ export default {
       border-right: 0;
     }
   }
+}
+
+.account-container {
+  min-height: 360px;
 }
 </style>
