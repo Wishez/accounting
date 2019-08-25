@@ -1,5 +1,5 @@
 import Vue from "vue";
-import moment from "moment";
+import { formatDate } from './lodash'
 
 Vue.filter(
   "fixSum",
@@ -8,10 +8,4 @@ Vue.filter(
 );
 
 
-Vue.filter("formatDate", (date, format = "L") => {
-  if (typeof date === "string") {
-    date = date.replace(/[-\.]/g, "/");
-  }
-
-  return moment(date).locale('ru').format(format);
-});
+Vue.filter("formatDate", formatDate);
