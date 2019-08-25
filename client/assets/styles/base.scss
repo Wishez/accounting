@@ -25,12 +25,21 @@ html, body {
   padding: 0;
 }
 
+a {
+  color: $darkGray;
+  transition: 150ms $sharp;
+
+  &:focus, &:hover {
+    color: rgba($darkGray, .4);
+  }
+}
+
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Vollkorn SC', serif;
 	line-height: 1.2em;
 	margin: 0 0 9px;
 	font-weight: normal;
-	color: #1f2229;
+	color: $darkGray;
 }
 
 h1 {
@@ -72,6 +81,10 @@ form {
   background-color: #fff;
   box-shadow: 0 0 0 15px #fff;
   border: 2px solid $darkGray;
+
+  h1 {
+    font-size: 28px;
+  }
 }
 
 input {
@@ -105,18 +118,31 @@ input {
   color: $red;
 }
 
-.actions {
-  margin-bottom: 2em;
+.success {
+  font-weight: bold;
 }
 
 .action-button {
   display: inline-block;
+  margin-right: 10px;
   font-size: 1em;
-  margin-right: 5px;
-  border-bottom: 1px dashed $darkGray !important;  
+  border-bottom: dashed $darkGray;
+  border-bottom-width: 1px !important;
+  transition: 150ms $sharp;
+  
+  &:hover, &:focus {
+    border-color: rgba($darkGray, .5);
+  }
+
+  
+  a {
+    text-decoration: none;
+  }
 }
 
 .form-color-picker {
+  width: 130px;
+  height: 130px;
   margin: 1em auto;
 }
 
@@ -212,6 +238,15 @@ ul {
   }
 }
 
+.formButtonsContainer {
+  display: flex;
+  align-items: center;
+
+  &_topOffset {
+    margin-top: 2em;
+  }
+}
+
 .account-transaction {
   width: 100%;
   display: flex;
@@ -269,7 +304,61 @@ section {
 
 .litter {
   padding: 1em;
-  margin: 0 -1em;
+  margin: 0;
+  width: calc(100% + 1em);
   background-color: white;
   margin-bottom: 1em;
+}
+
+.actions {
+  margin-bottom: 2em;
+
+  &_near {
+    margin-bottom: 1em;
+  }
+
+  input {
+    margin: 0;
+  }
+
+  .fieldContainer {
+    width: auto;
+    margin-left: auto;
+
+    min-width: 360px;
+  }
+}
+
+.fieldContainer_inline {
+  display: flex;
+  align-items: center;
+
+  input {
+    width: auto;
+    margin-bottom: 0;
+    margin-left: 10px;
+    padding-top: 5px;
+  }
+}
+
+.roleFieldContainer {
+
+  .dropdown-content {
+    margin-top: 38px;
+    top: -7px;
+  }
+
+  input {
+    margin-left: 16px;
+  }
+}
+
+.note {
+  font-size: 13px;
+  color: #8e8e8e;
+}
+
+.empty-items {
+  // position: absolute;
+  // top: calc(100% + 18px);
 }
