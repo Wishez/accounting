@@ -131,7 +131,8 @@ export default {
 
     clearFilter() {
       this.clearType()
-      this.clearDate()
+      this.clearDate('untilDate')()
+      this.clearDate('sinceDate')()
     },
     
     clearDate(dateFieldName) {
