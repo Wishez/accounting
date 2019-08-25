@@ -1,10 +1,8 @@
 <template>
   <form v-if="isLoggedIn" @submit.prevent="onSubmit">
     <h1>Транзакция</h1>
-    <label for="name" id="nameLabel">
-      Имя
-    </label>
     <base-dropdown
+      labelText="Тип"
       :options="transactionsTypes"
       @selected="validateSelection"
       @filter="getDropdownValues"
@@ -21,6 +19,7 @@
       id="date"
       name="date"
       format="DD.MM.YYYY"
+      formatOutput="YYYY-MM-DD"
       color="#de1f24"
       buttonCancel="Отмена"
       placeholdr="24.07.2019"
@@ -64,14 +63,20 @@
 
     <p v-if="isError" class="error">{{errorMessage}}</p>
 
-    <base-button type="submit">
-      Сохранить
-    </base-button>
+    <div class="formButtonsContainer">
+      <base-button type="submit" class="action-button">
+        Сохранить
+      </base-button>
+
+      <base-button v-if="isEdit" :action="deleteTransaction" type="button" class="action-button" unstyled>
+        {{isDeleted ? 'Восстановить' : 'Удалить'}}
+      </base-button>
+    </div>
   </form>
 </template>
 
 <script>
-import { createTransactionGql, updateTransactionGql, getTransactionsTypesGql } from '~/constants/gql'
+import { createTransactionGql, updateTransactionGql, getTransactionsTypesGql, deleteTransactionGql } from '~/constants/gql'
 import { popupsNames } from '~/constants/popups'
 import { pluck, map } from 'rxjs/operators';
 
@@ -90,8 +95,17 @@ export default {
     transaction() {
       return this.$lodash.get(this.$store.state.popups.payload, popupsNames.TRANSACTION, {})
     },
+
     isLoggedIn() {
       return this.$store.state.auth.isLoggedIn
+    },
+
+    isDeleted() {
+      return Boolean(this.transaction.isDeleted)
+    },
+
+    isEdit() {
+      return Boolean(this.transaction.id)
     },
 
     payload() {
@@ -105,7 +119,7 @@ export default {
         type = {},
         accountId,
         order = 0,
-        date = new Date(),
+        date = this.$lodash.formatDate(Date.now(), 'YYYY-MM-DD'),
       } = this.transaction
       return {
         category,
@@ -140,14 +154,13 @@ export default {
       },
       updateCount: 0,
       date: new Date(),
-      log: console.log,
     }
   },
 
   created() {
     this.date = this.payload.date
-    this.transactionStatistics = this.$lodash.pick(this.payload, ['profit', 'consumption', 'balance'])
     this.setLastTransactionBalance()
+    this.transactionStatistics = this.$lodash.pick(this.payload, ['profit', 'consumption', 'balance'])
   },
 
   methods: {
@@ -163,7 +176,7 @@ export default {
 
     setLastTransactionBalance() {
       const currentTransactionTypeId = this.payload.transactionTypeId
-      if (!this.transaction.id && currentTransactionTypeId) {
+      if (!this.isEdit && currentTransactionTypeId) {
         const { get, last } = this.$lodash
         const transactions = get(this.transaction.categories.find(({ typeId }) => (typeId === currentTransactionTypeId)), 'transactions', [])
 
@@ -182,6 +195,7 @@ export default {
           const lastTransactionsDated = last(categoryTransactions)
           items = get(lastTransactionsDated, 'items', [])
         }
+
         const balance = get(items, `${items.length - 1}.balance`, 0)
         this.payload.balance = balance
         this.transactionStatistics = {...this.$lodash.pick(this.payload, ['profit', 'consumption']), balance }
@@ -197,7 +211,7 @@ export default {
 
     onSubmit() {
       this.clearErorState()
-      if (this.transaction.id) this.updateTransaction()
+      if (this.isEdit) this.updateTransaction()
       else this.createTransaction()
     },
 
@@ -245,13 +259,26 @@ export default {
       }
     },
 
+    async deleteTransaction() {
+      const result = await this.$apollo.mutate({
+        mutation: deleteTransactionGql,
+        variables: {
+          uuid: this.transaction.id,
+        }
+      })
+        .then(({ data }) => data.deleteTransaction)
+        .catch(() => this.handleError('Не удалось удалить транзакцию'))
+      
+      if (result.isSuccess) this.closePopup()
+    },
+
     handleError(message) {
       this.isError = true
       this.errorMessage = message
     },
     
     showRequestError() {
-      this.handleError('Не удалось создать или обновить счёт')
+      this.handleError(`Не удалось ${this.isEdit ? 'обновить' : 'создать'} транзакцию`)
     },
     
     setNumberToPayload(fieldName, value) {
