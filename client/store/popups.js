@@ -4,7 +4,9 @@ export const state = () => ({
   [popupsNames.ACCOUNT]: false,
   [popupsNames.TRANSACTION]: false,
   [popupsNames.TRANSACTION_TYPE]: false,
+  [popupsNames.USER]: false,
   payload: {},
+  isPopupOpened: false,
 })
 
 export const mutations = {
@@ -13,10 +15,12 @@ export const mutations = {
       const isOpened = state[popupName] === true
       if (isOpened) state[popupName] = false
     })
+    state.isPopupOpened = false
   },
 
   switchPopupState(state, { isOpened, popupName }) {
     state[popupName] = isOpened;
+    state.isPopupOpened = isOpened
   },
 
   setPopupPayload(state, { popupName, payload }) {
@@ -25,7 +29,7 @@ export const mutations = {
 
   clearPopupPayload(state) {
     state.payload = {}
-  }
+  },
 }
 
 export const actions = {
@@ -36,19 +40,4 @@ export const actions = {
       popupName,
     })    
   }
-//   closeNotificationPopup({ commit }) {
-//     commit("switchPopupState", {
-//       isOpened: false,
-//       popupName: popupsNames.notification
-//     });
-
-//     commit("authorization/cleanRequestState", null, { root: true });
-//   },
-
-//   openNotificationPopupWithMessage({ commit }) {
-//     commit("switchPopupState", {
-//       isOpened: true,
-//       popupName: popupsNames.notification
-//     })
-//   },
 }

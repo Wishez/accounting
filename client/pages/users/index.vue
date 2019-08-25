@@ -1,0 +1,310 @@
+<template>
+  <div v-if="auth.isUserAdmin" class="container">
+    <div class="actions">
+      <base-button :action="openUserDialog" class="action-button" unstyled>Создать пользователя</base-button>
+      <base-button :action="toggleUsers" class="action-button" unstyled>{{isDeletedShown ? 'Действующие' : 'Удалённые'}} пользователи</base-button>
+    
+      <base-field
+        v-model="nameFilterValue"
+        name="nameFilter"
+        id="nameFilter"
+        autocomplete="off"
+        placeholder="Иван Васильевич"
+        :icon="['fas', 'search']"
+      />
+    </div>
+
+    <section class="users-section">
+      <h1>Пользователи</h1>
+      <loader v-if="isSearchLoading" />
+      <ul v-if="$lodash.get(profiles, 'length', 0)" class="users-list">
+        <li
+          v-for="({ id, email, role, dateJoined }, index) in profiles.filter((profile) => searchName ? payloads[profile.id].name.indexOf(searchName) !== -1 : true)"
+          :key="index + updateCount"
+          class="user-item"
+        >
+          <h2 @input="(event) => setUserName(event, id)" :contenteditable="auth.isUserAdmin  && auth.user.id !== id">
+            {{payloads[id].name}}
+          </h2>
+          <p>Аккаунт создан: {{new Date(dateJoined) | formatDate('DD MMMM YYYYг.')}}</p>
+
+          <p v-if="!auth.isUserAdmin || auth.user.id === id">Email: {{email}}</p>
+          <p v-else>  
+            <base-field
+              v-model="payloads[id].email"
+              labelText="Email: "
+              type="email"
+              :id="`user_${index}`"
+              :name="`user_${index}`"
+              isInline
+            />
+          </p>
+          
+          <p v-if="auth.user.id !== id" class="roleFieldContainer">
+            <base-dropdown
+              labelText="Роль:"
+              :options="roles"
+              :name="`dropdown_${index}`"
+              :id="`dropdown_${index}`"
+              :defaultValue="roles.find(({ id }) => id === role)"
+              @selected="(selection) => validateSelection(id, selection)"
+              placeholder="Выберете роль"
+              isInline
+            />
+          </p>
+          <p v-else>Ваша роль: {{RolesMap[role]}}</p>
+
+          <p v-if="$lodash.get(payloads[id], 'isError')" class="error">{{errorMessage}}</p>
+          <p v-if="$lodash.get(payloads[id], 'isSuccess')">{{successMessage}}</p>
+
+          <div v-if="id !== auth.user.id && auth.isUserAdmin" class="userActions">
+            <base-button :action="editUser(id)">Обновить</base-button>
+            <base-button :action="deleteUser(id)" unstyled>
+              {{isDeletedShown ? 'Восстановить' : 'Удалить'}}
+            </base-button>
+          </div>
+        </li>
+      </ul>
+      <loader v-else-if="$apollo.queries.profiles.loading" />
+    </section>
+
+  <modal-container :isShown="$store.state.popups[userPopupName]" :onClose="refetchProfieles">
+      <user-form />
+    </modal-container>
+  </div>
+  <p v-else class="container">
+    У вас недостаточно прав для просмотра этой страницы
+  </p>
+
+</template>
+
+<script>
+import { getProfilesGql, updateProfileGql, deleteProfileGql } from '~/constants/gql'
+import { popupsNames } from '~/constants/popups'
+import { Roles, RolesMap, roles } from '~/constants/user'
+import { ModalContainer, UserForm } from '~/components'
+import { pluck, debounceTime, map, of } from 'rxjs/operators'
+
+const { USER: userPopupName } = popupsNames
+
+export default {
+  name: "UsersPage",
+  components: {
+    ModalContainer,
+    UserForm,
+  },
+
+  apollo: {
+    profiles: {
+      query: getProfilesGql,
+
+      update({ profiles }) {
+        const { isSuccess, data } = profiles
+        data.forEach((user) => this.createUserPayloadIfNeeded(user.id, user))
+        return isSuccess ? data : []
+      },
+    }
+  },
+  data: () => ({
+    RolesMap,
+    Roles,
+    roles,
+    payloads: {},
+    userPopupName,
+    errorMessage: 'Не удалось обновить профиль',
+    successMessage: 'Профиль успешно обновлён',
+    updateCount: 1,
+    searchName: '',
+    nameFilterValue: '',
+    isDeletedShown: false,
+    isSearchLoading: false,
+  }),
+  computed: {
+    auth() {
+      return this.$store.state.auth
+    }
+  },
+  methods: {
+    validateSelection(userId, selection) {
+      this.createUserPayloadIfNeeded(userId)
+
+      const userPayload = this.payloads[userId]
+      userPayload.role = selection.id
+    },
+
+    deleteUser(id) {
+      return async () => {
+        try {
+          const response = await this.$apollo.mutate({
+            mutation: deleteProfileGql,
+            variables: {
+              uuid: id,
+            }
+          }).then(({ data: responseData }) => {
+            const { isSuccess, data } = responseData.deleteProfile
+            if (isSuccess) this.refetchProfieles()
+            else this.showRequestError(id)
+            return data
+          })
+            .catch(() => this.showRequestError(id))
+        } catch (e) {
+          this.showRequestError(id)
+        }
+      }
+    },
+
+    editUser(id) {
+      return async () => {
+        try {
+          const response = await this.$apollo.mutate({
+            mutation: updateProfileGql,
+            variables: {
+              uuid: id,
+              payload: this.$lodash.omit(this.payloads[id], ['isError', 'isSuccess', 'id'])
+            }
+          }).then(({ data: responseData }) => {
+            const { isSuccess, data } = responseData.updateProfile
+            if (isSuccess) this.showSuccess(id)
+            else this.showRequestError(id)
+            return data
+          })
+            .catch(() => this.showRequestError(id))
+        } catch (e) {
+          this.showRequestError(id)
+        }
+      }
+    },
+
+    showSuccess(id) {
+      this.createUserPayloadIfNeeded(id)
+
+      const payload = this.payloads[id]
+      payload.isSuccess = true
+      payload.isError = false
+      this.refetchProfieles()
+    },
+
+    showRequestError(id) {
+      this.createUserPayloadIfNeeded(id)
+
+      const payload = this.payloads[id]
+      payload.isError = true
+      payload.isSuccess = false
+      this.updateCount += 1
+    },
+
+    refetchProfieles() {
+      this.$apollo.queries.profiles.refetch({
+        isDeletedShown: this.isDeletedShown,
+      })
+      this.updateCount += 1
+    },
+
+    createUserPayloadIfNeeded(id, user) {
+      if (!this.payloads[id]) {
+        const { firstName, lastName, role, email } = user
+        const name = 
+        this.payloads[id] = {
+          name: `${firstName} ${lastName}`,
+          email,
+          role,
+         }
+      }
+    },
+
+    toggleUsers() {
+      this.isDeletedShown = !this.isDeletedShown
+      this.refetchProfieles()
+    },
+
+    setUserName(event, id) {
+      this.payloads[id].name = event.target.innerText.trim()
+    },
+
+    openUserDialog() {
+      this.$store.dispatch('popups/openPopup', userPopupName)
+    },
+
+    setUserEmail(event, id) {
+      this.payloads[id].email = event.target.innerText.trim()
+    }
+  },
+
+  subscriptions() {
+    return {
+      $searchName: this.$watchAsObservable('nameFilterValue').pipe(
+        map((value) => {
+          this.isSearchLoading = true
+          return value
+        }),
+        debounceTime(500),
+        pluck('newValue'),
+        map(value => {
+          this.searchName = value
+          this.isSearchLoading = false
+        })
+      ),
+    }
+  }
+}
+</script>
+
+<style lang="scss" scoped>
+@import '~/assets/styles/config/_colors.sass';
+
+
+p {
+  margin: 0 0 .5em;
+
+  &:last-of-type {
+    margin-bottom: 1.25em;
+  }
+}
+
+.users-section {
+  min-height: 400px;
+}
+
+.users-list {
+  display: flex;
+  flex-flow: row wrap;
+}
+
+.user-item {
+  padding: 1em;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex-grow: 1;
+  border-radius: 4px;
+  background-color: white;
+  border: 2px dashed $darkGray; 
+
+  @media (--from-tablet) {
+    flex-basis: 33%;
+    margin: .5em;
+    max-width: calc(50% - 1em);
+  }
+  
+  button {
+    margin-top: auto;
+  }
+}
+
+.userActions {
+  width: 100%;
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+
+  button {
+    margin-top: 0;
+    margin-right: 15px;
+    border-bottom: 1px dotted;
+  }
+}
+.actions {
+  display: flex;
+  align-items: center;
+}
+</style>
