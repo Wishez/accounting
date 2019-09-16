@@ -361,7 +361,7 @@ img {
   }
 
   .fieldContainer {
-    width: auto;
+    width: auto !important;
     margin-left: auto;
 
     @media (--from-tablet) {
