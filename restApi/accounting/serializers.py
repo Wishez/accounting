@@ -41,14 +41,14 @@ class UserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         requestData = self.request_data
         user = User.objects.create(**validated_data)
-        user.set_password(requestData.get('password'))
+        user.set_password(validated_data.get('password'))
         user.save()
         return user
 
     def update(self, instance, validated_data):
         requestData = self.request_data
         oldPassword = instance.password
-        password = requestData.get('password')
+        password = validated_data.get('password')
         User.objects.filter(uuid=instance.uuid).update(**validated_data)
         user = User.objects.filter(uuid=instance.uuid)[0]
         
@@ -57,7 +57,7 @@ class UserSerializer(serializers.ModelSerializer):
         else:
             user.password = oldPassword
 
-        user.save()    
+        user.save()
         return user
 
 
@@ -178,9 +178,12 @@ class TransactionDetailSerializer(serializers.ModelSerializer):
         transaction.update(**validated_data)
 
         date = validated_data.get('date')
+        print(date, instance.date)
         if date != instance.date:
             transactionType = transactionType or instance.transactionType
             order = len(Transaction.objects.filter(date=validated_data.get('date'), transactionType=transactionType))
+            print('order', order)
             transaction.update(order=order)
+        
 
         return transaction[0]
