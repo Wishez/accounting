@@ -54,8 +54,8 @@ services:
       accounting-network:
         aliases:
           - database
-    ports:
-      - 5851:5851
+    # ports:
+    #   - 5432:5432
   
   graphql:
     build: ./server
