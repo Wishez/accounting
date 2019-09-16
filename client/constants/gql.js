@@ -76,6 +76,7 @@ export const getProfileGql = gql`
         lastName
         role
         dateJoined
+        isDeleted
       }
     }
   }

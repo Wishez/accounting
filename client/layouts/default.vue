@@ -89,6 +89,7 @@ export default {
   components: {
     MenuItem,
   },
+
   beforeMount() {
       const token = this.$cookies.get('access_token')
       if (token) this.verifyAuth(token)
@@ -174,7 +175,7 @@ footer {
   max-width: 100vw;
   background-color: #fff;
   padding-top: 1em;
-  z-index: 1;
+  z-index: 1000;
 }
 
 .container {

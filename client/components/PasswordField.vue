@@ -108,7 +108,7 @@ export default {
 
 .passwordIcon {
   position: absolute;
-  bottom: .5em;
-  right: .5em;
+  bottom: .9em;
+  right: .9em;
 }
 </style>

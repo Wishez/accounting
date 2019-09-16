@@ -45,6 +45,7 @@
       id="email"
       labelText="Email"
       placeholder="shiningfinger@list.ru"
+      autocomplete="off"
       isRequired
     />
 

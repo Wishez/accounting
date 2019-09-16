@@ -11,9 +11,13 @@
 
       <p v-if="isError" class="error">{{errorMessage}}</p>
 
-      <base-button type="submit">
-        Войти
-      </base-button>
+      <div class="submit-button">
+        <base-button type="submit">
+          Войти
+        </base-button>
+      </div>
+
+      <loader v-if="isLoading" />
     </form>
   </section>
 </template>
@@ -30,14 +34,22 @@ export default {
   },
   data: () => ({
     credentials: {
-      password: 'rootroot',
-      email: 'shiningfinger@list.ru',
+      password: '',
+      email: '',
     },
     isError: false,
     errorMessage: '',
+    isLoading: false,
   }),
+
+  mounted() {
+    this.credentials.email = window.localStorage.email
+  },
+
   methods: {
     async login() {
+      this.isLoading = true
+      window.localStorage.email = this.credentials.email
       try {
         const response = await this.$apollo.mutate({
           mutation: authenticateUserGql,
@@ -55,6 +67,8 @@ export default {
       } catch (e) {
         console.error(e)
       }
+
+      this.isLoading = false
     },
     handleError(message) {
       this.errorMessage = message
@@ -66,3 +80,11 @@ export default {
   },
 }
 </script>
+
+<style lang="scss" scoped>
+.submit-button {
+  button {
+    margin: 0;
+  }
+}
+</style>

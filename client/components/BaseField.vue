@@ -66,10 +66,6 @@ export default {
 <style lang="scss" scoped>
 .fieldContainer {
   width: 100%;
-
-  &_inline {
-    
-  }
 }
 .inputContainer {
   position: relative;
@@ -78,8 +74,8 @@ export default {
 
 .inputIcon {
   position: absolute;
-  top: .8em;
-  right: .5em;
+  top: .9em;
+  right: .9em;
 }
 
 </style>

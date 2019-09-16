@@ -3,6 +3,7 @@
     'statistics-holder': true,
     'statistics-holder_litter': hasLitter, 
     'statistics-holder_form': !isReadOnly,
+    'statistics-holder_fadeOut': isFadeOut,
   }">
     <div class="statistics-container">
       <label for="profit-statistics">Приход:</label>
@@ -11,6 +12,7 @@
         v-money="money"
         id="profit-statistics"
         class="profit"
+        :readOnly="isReadOnly"
       />
     </div>
 
@@ -66,6 +68,7 @@ export default {
         profit: 0.00,
         consumption: 0.00,
       })
+
       statistics.balance = Number(this.$lodash.get(transactions, '0.balance', 0)).toFixed(2)
       return statistics
     },
@@ -80,6 +83,7 @@ export default {
       type: Boolean,
       default: true,
     },
+    isFadeOut: Boolean,
     accountBalance: [String, Number],
   },
   data: () => ({
@@ -163,6 +167,13 @@ p {
   max-width: 100%;
   position: relative;
   text-align: left;
+  transition: opacity 200ms $standart;
+  will-change: opacity;
+  opacity: 1;
+
+  &_fadeOut {
+    opacity: 0;
+  }
 
   &_litter {
     padding: 1em;
