@@ -17,17 +17,17 @@ services:
     networks: 
       - accounting-network
 
-  nginx:
-    image: nginx:1.13
-    container_name: accounting-ui-nginx
-    ports:
-      - "80:80"
-    volumes:
-      - ./nginx:/etc/nginx/conf.d
-    depends_on:
-      - nuxt
-    networks: 
-      - accounting-network
+  # nginx:
+  #   image: nginx:1.13
+  #   container_name: accounting-ui-nginx
+  #   ports:
+  #     - "80:80"
+  #   volumes:
+  #     - ./nginx:/etc/nginx/conf.d
+  #   depends_on:
+  #     - nuxt
+  #   networks: 
+  #     - accounting-network
 
   rest:
     build: ./restApi
@@ -54,6 +54,8 @@ services:
       accounting-network:
         aliases:
           - database
+    ports:
+      - 5851:5851
   
   graphql:
     build: ./server
