@@ -38,7 +38,7 @@ app.use(bodyParser.urlencoded({ extended: false }))
 const graphqlPath = '/api' 
 server.applyMiddleware({ app, path: graphqlPath })
 
-const PORT = 4000
+const PORT = 4002
 app.listen({ port: PORT }, () => {
     console.log(`🚀 Server ready at http://localhost:${PORT}${server.graphqlPath}`)
 })
