@@ -26,8 +26,11 @@ export async function fetechUserProfile(email) {
     variables: { email },
   }).then(({ data }) => data.profile.data)
     .catch((e) => console.log('Не получилось запросить данные аккаунта', e.message))
-  if (this.$lodash.get(profileResponse, 'id')) {
-    commit('auth/setCurrentProfile', profileResponse)
-    commit('auth/setAdminPrivilege', profileResponse.role === Roles.ADMIN)
-  } else this.$router.push('/logout')
+  const isSuccess = this.$lodash.get(profileResponse, 'id')
+  console.log(profileResponse.isDeleted)
+  if (isSuccess && profileResponse.isDeleted) this.$router.push('/logout')
+  else if (isSuccess) commit('auth/setCurrentProfile', profileResponse)
+  else this.$router.push('/logout')
+
+  return { isSuccess, data: profileResponse }
 }

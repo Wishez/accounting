@@ -7,14 +7,13 @@
       slugPlaceholderText="ivan-bank"
       :slugValue="this.account.slug"
       :nameValue="this.account.name"
-      @slugInput="value => {
-        slug = value
-        payload.slug = value
-      }"
-      @nameInput="value => {
-        name = value
-        payload.name = value
-      }"
+      @slugInput="value => payload.slug = value"
+      @nameInput="value => payload.name = value"
+    />
+
+    <ColorField
+      :entity="account"
+      @changeColor="value => payload.color = value"
     />
 
     <p v-if="isError" class="error">{{errorMessage}}</p>
@@ -28,9 +27,13 @@
 <script>
 import { createAccountGql, updateAccountGql } from '~/constants/gql'
 import { popupsNames } from '~/constants/popups'
+import ColorField from './ColorField'
 
 export default {
   name: 'AccountForm',
+  components: {
+    ColorField,
+  },
   computed: {
     account() {
       return this.$lodash.get(this.$store.state.popups.payload, popupsNames.ACCOUNT, {})
@@ -43,22 +46,20 @@ export default {
     return {
       isError: false,
       errorMessage: '',
-      name: '',
-      slug: '',
       payload: {
         name: '',
         slug: '',
+        color: '',
       },
     }
   },
 
   mounted() {
-    const { slug, name } = this.account 
+    const { slug, name, color } = this.account 
     if (name) {
       this.payload.name = name
       this.payload.slug = slug
-      this.slug = slug
-      this.name = name
+      this.payload.color = color
     }
   },
 
@@ -118,24 +119,6 @@ export default {
     showErrorAccountRequest() {
       this.handleError('Не удалось создать или обновить счёт')
     },
-
-
   },
-  // watch: {
-  //   name(value) {
-  //     this.payload.name = value
-  //     const formattedSlug = this.$lodash.transliteText(value, '-')
-  //     this.slug = formattedSlug
-  //     this.payload.slug = formattedSlug
-  //     return value
-  //   },
-
-  //   slug(value) {
-  //     const formattedSlug = this.$lodash.transliteText(value, '-')
-  //     this.payload.slug = formattedSlug
-  //     this.slug = formattedSlug
-  //     return slug
-  //   }
-  // },
 }
 </script>

@@ -75,12 +75,13 @@ form {
   max-width: 466px;
   margin: 2em auto;
   padding: 1.5em 2em 2em;
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   background-color: #fff;
-  box-shadow: 0 0 0 15px #fff;
-  border: 2px solid $darkGray;
+  border: 3px solid $darkGray;
+  box-shadow: 0 0 10px rgba(#333, .5);
 
   h1 {
     font-size: 28px;
@@ -90,8 +91,9 @@ form {
 input {
   width: 100%;
   margin-bottom: 1.5em;
-  padding: 1em .5em .5em;
+  padding: 1em .5em .7em;
   font-size: 1em;
+  background-color: transparent;
 }
 
 .datepicker-input.datepicker-input.datepicker-input input, input {
@@ -246,6 +248,10 @@ ul {
   display: flex;
   align-items: center;
 
+  .action-button:nth-child(2) {
+    margin-left: 15px;
+  }
+
   button[type="submit"] {
     margin-top: 0;
   }
@@ -261,17 +267,18 @@ ul {
   font-size: 16px;
   transition: 150ms $sharp;
 
-  &:hover {
+  &:hover, &:focus {
     background-color: rgba($red, .1);
+    outline: 0;
   }
 
   
   > * {
-    width: 25%;
+    width: 20%;
     min-height: 100px;
     height: 100%;
     margin: 0;
-    padding: 1em 1em 1.25em;
+    padding: 1em .75em 1.25em;
     border-right: 1px solid $darkGray;
     display: flex;
     align-items: center;
@@ -316,9 +323,10 @@ img {
 }
 
 .litter {
+  width: calc(100% + 1em);
   padding: 1em;
   margin: 0;
-  width: calc(100% + 1em);
+  box-shadow: 0 0 10px rgba(#333, .5);
   background-color: white;
   margin-bottom: 1em;
 }
@@ -341,6 +349,10 @@ img {
 
   &_near {
     margin-bottom: 1em;
+
+    a {
+      text-decoration: none;
+    }
   }
 
   input {
@@ -364,6 +376,12 @@ img {
 
   @media (--until-tablet) {
     flex-wrap: wrap;
+  }
+
+  label {
+    @media (--from-tablet) {
+      margin-bottom: 10px;
+    }
   }
 
   input {
@@ -399,7 +417,17 @@ img {
   color: #8e8e8e;
 }
 
-.empty-items {
-  // position: absolute;
-  // top: calc(100% + 18px);
+.search-field {
+  input {
+    margin-bottom: 0;
+  }
+}
+
+.placeholder {
+  max-width: 60ch;
+  margin: auto;
+
+  &__title {
+    text-align: center;
+  }
 }

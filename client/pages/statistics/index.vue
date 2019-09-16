@@ -19,14 +19,3 @@ export default {
 }
 </script>
 
-<style lang="scss" scoped>
-.placeholder {
-  max-width: 60ch;
-  margin: auto;
-
-  &__title {
-    text-align: center;
-  }
-}
-</style>
-

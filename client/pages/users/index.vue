@@ -1,22 +1,22 @@
 <template>
   <div v-if="auth.isUserAdmin" class="container">
-    <div class="actions">
-      <base-button :action="openUserDialog" class="action-button" unstyled>Создать пользователя</base-button>
-    
-      <base-field
-        v-model="nameFilterValue"
-        name="nameFilter"
-        id="nameFilter"
-        autocomplete="off"
-        placeholder="Иван Васильевич"
-        :icon="['fas', 'search']"
-      />
-    </div>
-
     <section class="users-section">
       <h1>Пользователи</h1>
       <div class="actions_near">
         <base-button :action="toggleUsers" class="action-button" unstyled>{{isDeletedShown ? 'Действующие' : 'Удалённые'}} пользователи</base-button>
+
+        <base-button :action="openUserDialog" class="action-button" unstyled>Создать пользователя</base-button>
+    
+        <div class="search-field">
+          <base-field
+            v-model="nameFilterValue"
+            name="nameFilter"
+            id="nameFilter"
+            autocomplete="off"
+            placeholder="Иван Васильевич"
+            :icon="['fas', 'search']"
+          />
+        </div>
       </div>
       <loader v-if="isSearchLoading" />
       <ul v-if="$lodash.get(profiles, 'length', 0)" class="users-list">
@@ -271,6 +271,8 @@ p {
 .users-list {
   display: flex;
   flex-flow: row wrap;
+  margin-left: -.5em;
+  margin-right: -.5em;
 }
 
 .user-item {
@@ -279,13 +281,10 @@ p {
   flex-direction: column;
   align-items: flex-start;
   flex-grow: 1;
-  border-radius: 4px;
+  border-radius: 2px;
+  box-shadow: 0 0 10px rgba(#333, .5);
   background-color: white;
-  border: 2px dashed $darkGray; 
-
-  &:first-child {
-    margin-top: 0;
-  }
+  border: 3px dashed $darkGray; 
 
   @media (--from-tablet) {
     flex-basis: 33%;
@@ -314,11 +313,22 @@ p {
   button {
     margin-top: 0;
     margin-right: 15px;
+  }
+
+  button:not(.button) {
     border-bottom: 1px dotted;
   }
 }
-.actions {
+
+.search-field {
+  margin-left: auto;
+
+  @media (--from-tablet) {
+    min-width: 360px;
+  }
+}
+.actions_near {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
 }
 </style>

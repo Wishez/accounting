@@ -17,42 +17,10 @@
       }"
     />
 
-    <label id="colorLabel">
-      Цвет
-    </label>
-    <color-picker v-bind="color" class="form-color-picker" @input="selectColor"></color-picker>
-
-    <div class="radio-button-container">
-      <input v-model="color" class="radio-button" name="color" type="radio" :value="chooseColor" id="luminosityColor" aria-describedby="luminosityColorLabel" @change="changeColor" />
-      <label for="luminosityColor">
-        Выбрать
-      </label>
-    </div>
-  
-    <div class="radio-button-container">
-      <input v-model="color" name="color" class="radio-button" type="radio" :value="{
-        hue: 255,
-        saturation: 0,
-        luminosity: 0,
-        alpha: 1
-      }" id="luminosityBlack" aria-describedby="luminosityBlackLabel" @change="changeColor" />
-      <label for="luminosityBlack">
-        Чёрный
-      </label>
-    </div>
-
-
-    <div class="radio-button-container">
-      <input v-model="color" class="radio-button" name="color" type="radio" :value="{
-        hue: 255,
-        saturation: 100,
-        luminosity: 100,
-        alpha: 1
-      }" id="luminosityWhite" aria-describedby="luminosityWhiteLabel" @change="changeColor" />
-      <label for="luminosityWhite" id="luminosityWhiteLabel">
-        Белый
-      </label>
-    </div>
+    <ColorField
+      :entity="transactionType"
+      @changeColor="value => payload.color = value"
+    />
 
     <p v-if="isError" class="error">{{errorMessage}}</p>
 
@@ -69,15 +37,14 @@
 </template>
 
 <script>
-import ColorPicker from '@radial-color-picker/vue-color-picker'
 import { createTransactionTypeGql, updateTransactionTypeGql, getTransactionTypeGql, deleteTransactionTypeGql } from '~/constants/gql'
 import { popupsNames } from '~/constants/popups'
-
+import ColorField from './ColorField'
 export default {
-  name: 'AccountForm',
+  name: 'TransactionTypeForm',
 
   components: {
-    ColorPicker
+    ColorField,
   },
 
   computed: {
@@ -105,40 +72,12 @@ export default {
         color
       }
     },
-
-    baseColor() {
-      const { color } = this.transactionType
-      const parsedColor = this.$lodash.getHslFromHex(color)
-      let { hue = 50, luminosity = 50 } = parsedColor
-      return {
-        hue,
-        saturation: 100,
-        luminosity,
-        alpha: 1
-      }
-    }
-  },
-
-  mounted() {
-    this.setColor()
   },
 
   data() {
     return {
       isError: false,
       errorMessage: '',
-      color: {
-        hue: 50,
-        saturation: 100,
-        luminosity: 50,
-        alpha: 1
-      },
-      chooseColor: {
-        hue: 50,
-        saturation: 100,
-        luminosity: 50,
-        alpha: 1,
-      },
     }
   },
   methods: {
@@ -146,27 +85,6 @@ export default {
       this.clearErorState()
       if (this.isEdit) this.updateTransactionType()
       else this.createTransactionType()
-    },
-  
-    setColor() {
-      this.color = { ...this.baseColor }
-    },
-
-    selectColor(colorHue) {
-      this.color.hue = colorHue
-      this.chooseColor.hue = colorHue
-      let color = '#ffffff'
-      const { hue, saturation, luminosity } = this.color
-      if (luminosity === 50) {
-        color = this.$lodash.getHexFromHsl(hue, saturation, luminosity)
-      } else if (luminosity === 0) {
-        color = '#333333'
-      }
-      this.payload.color = color
-    },
-
-    changeColor() {
-      this.selectColor(this.color.hue)
     },
 
     createTransactionType() {

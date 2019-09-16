@@ -3,6 +3,10 @@ module.exports = {
     '~/assets/fonts/fonts.scss',
   ],
 
+  server: {
+    port: 3333,
+  },
+
   plugins: [
     { src: '~/plugins/cookies.js', mode: 'client' },
     { src: '~/plugins/components.client.js', mode: 'client' },
@@ -112,7 +116,7 @@ module.exports = {
         * Define the domain where the cookie is available. Defaults to
         * the domain of the page where the cookie was created.
         */
-      domain: 'http://localhost:4000/', // optional
+      domain: 'http://localhost:4002/', // optional
 
       /**
         * A Boolean indicating if the cookie transmission requires a
@@ -142,7 +146,7 @@ module.exports = {
     clientConfigs: {
       default: {
         // required
-        httpEndpoint: 'http://localhost:4000/api',
+        httpEndpoint: 'http://localhost:4002/api',
         // optional
         // See https://www.apollographql.com/docs/link/links/http.html#options
         httpLinkOptions: {

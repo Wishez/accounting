@@ -1,15 +1,5 @@
 <template>
-  <div v-if="$store.state.auth.isLoggedIn" class="container">
-    <div class="actions">
-      <base-button :action="openAccountPopup" class-name="action-button" unstyled>
-        Создать счёт
-      </base-button>
-
-      <base-button :action="openTransactionTypePopup" class-name="action-button" unstyled>
-        Создать тип транзакции
-      </base-button>
-    </div>
-
+  <div v-if="auth.isLoggedIn" class="container">
     <transaction-types />
 
     <section class="accountsTiles">
@@ -18,8 +8,12 @@
       <loader v-if="isSearchLoading" />
 
       <div class="actions_near actions accounts-actions">
-        <base-button :action="toggleAccounts" class-name="action-button" unstyled>
+        <base-button v-if="isUserNotViewer" :action="toggleAccounts" class-name="action-button" unstyled>
             Посмотреть {{isDeletedShown ? 'действующие' : 'удалённые'}} счета
+        </base-button>
+
+        <base-button v-if="isUserNotViewer" :action="openAccountPopup" class-name="action-button" unstyled>
+          Создать счёт
         </base-button>
 
         <base-field
@@ -27,15 +21,16 @@
           name="nameFilter"
           id="nameFilter"
           autocomplete="off"
-          placeholder="Иван Васильевич"
+          placeholder="FF/11"
           :icon="['fas', 'search']"
         />
       </div>
     
       <ul v-if="$lodash.get(accounts, 'length', 0)" class="accounts">
         <li
-          v-for="({ id, name, transactions, slug }, index) in accounts.filter(({ name }) => name.indexOf(searchName) !== -1)"
+          v-for="({ id, name, transactions, slug, color }, index) in accounts.filter(({ name }) => name.indexOf(searchName) !== -1)"
           :key="index"
+          :style="`border-color:${color};`"
           class="accountTile"
         >
           <h2 class="accountTile__name">
@@ -55,7 +50,7 @@
           <h3 class="statisticsHeading">Статистика</h3>
           <base-statistics :transactions="transactions" />
 
-          <div class="formButtonsContainer formButtonsContainer_topOffset">
+          <div v-if="isUserNotViewer" class="formButtonsContainer formButtonsContainer_topOffset">
             <base-button :action="editAccount({ id, name, slug })" class-name="action-button" unstyled>
               Редактировать
             </base-button>
@@ -103,6 +98,16 @@ export default {
     }
   },
 
+  computed: {
+    auth() {
+      return this.$store.state.auth
+    },
+
+    isUserNotViewer() {
+      return !this.auth.isUserViewer
+    }
+  },
+
   data() {
     return {
       accountPopupName,
@@ -135,10 +140,6 @@ export default {
 
     openAccountPopup() {
       this.$store.dispatch('popups/openPopup', accountPopupName)
-    },
-
-    openTransactionTypePopup() {
-      this.$store.dispatch('popups/openPopup', transactionTypePopupName)
     },
 
     editAccount(account) {
@@ -205,7 +206,8 @@ export default {
   flex-basis: calc(33.3% - 20px);
   flex-grow: 1;
   padding: 1em 1em 1.5em;
-  border: 2px solid $darkGray;
+  box-shadow: 0 0 10px rgba(#333, .5);
+  border: 3px dashed;
   margin: 0 10px 1em;
   background-color: #fff;
 

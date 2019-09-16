@@ -1,10 +1,5 @@
 <template>
-  <div class="container">
-    <div class="actions">
-      <base-button :action="openTransactionPopup" class="action-button" unstyled>Создать транзакцию</base-button>
-      <base-button :action="openTransactionTypePopup" class="action-button" unstyled>Создать тип транзакции</base-button>
-    </div>
-
+  <div v-if="auth.isLoggedIn" class="container">
     <transaction-types />
 
     <account-filter :accountCategories="accountCategories" @change="updateCategories" />
@@ -20,39 +15,39 @@
           </div>
         </h1>
 
-        <div class="actions">
+        <div v-if="isUserNotViewer" class="actions transactions-actions">
+          <base-button :action="openTransactionPopup" class="action-button" unstyled>Создать транзакцию</base-button>
           <base-button :action="toggleTransactions" class="action-button" unstyled>
             {{isDeletedTransactionsShown ? 'Действующие' : 'Удалённые'}} транзакиции
           </base-button>
         </div>
 
-        <base-statistics hasLitter :key="updateCount" :transactions="this.statistics" :accountBalance="accountBalance" />
+        <base-statistics :isFadeOut="isDeletedTransactionsShown" hasLitter :key="updateCount" :transactions="this.statistics" :accountBalance="accountBalance" />
       </div>
 
       <ul v-if="categories.length" class="account-transactions-categories">
         <li v-for="({ date, name, transactions }, index) in categories" :key="index + updateCount" class="account-transactions-category litter">
           <h2>{{date | formatDate('DD MMMM YYYY')}}</h2>
-          
-          <div v-for="({ items, typeName }, index) in Object.values(transactions)" :key="index + updateCount">
-            <h3>{{typeName}}</h3>
 
-            <div class="account-transactions-header">
+          <div class="account-transactions-header">
+              <span>Тип транзакции</span>
               <span class="head head_category">Категория</span>
               <span class="head head_branch" >Филиал</span>
               <span class="head head_note">Примичание</span>
               <span class="head head_statistics">Статистика</span>
-            </div>
-            <ul class="account-transactions-list">
-              <li v-for="(transaction, index) in items" :key="index + updateCount" class="account-transaction-item">
-                <base-button class="account-transaction" :action="editTransaction(transaction)" unstyled>
-                  <h3>{{transaction.category}}</h3>
-                  <span>{{transaction.branch}}</span>
-                  <span>{{transaction.note}}</span>
-                  <span><base-statistics :transactions="[transaction]" /></span>
-                </base-button>
-              </li>
-            </ul>
           </div>
+           
+          <ul class="account-transactions-list">
+            <li v-for="(transaction, index) in transactions" :key="index + updateCount" class="account-transaction-item">
+              <base-button class="account-transaction" :action="editTransaction(transaction)" unstyled>
+                <h3>{{transaction.type.name}}</h3>
+                <span>{{transaction.category}}</span>
+                <span>{{transaction.branch}}</span>
+                <span>{{transaction.note}}</span>
+                <span><base-statistics :transactions="[transaction]" /></span>
+              </base-button>
+            </li>
+          </ul>
         </li>
       </ul>
       <loader v-else-if="$apollo.queries.account.loading" />
@@ -141,9 +136,18 @@ export default {
   }),
 
   computed: {
+    auth() {
+      return this.$store.state.auth
+    },
+
+    isUserNotViewer() {
+      return !this.auth.isUserViewer
+    },
+
     transactionTypeId() {
       return this.$lodash.get(this, 'transactionType.id')
     },
+
     filter() {
       return this.$store.state.accountFilter
     }
@@ -171,27 +175,18 @@ export default {
       const categories = Object.values(get(account, 'transactions', []).reduce((result, transaction) => {
         const { category, type, date } = transaction
         const typeId = type.id
-        console.log(date, isDateInRange(date))
         if ((filterTypeId && typeId !== filterTypeId) || !isDateInRange(date)) return result
 
-        const transactionsMemorized = get(result, `${date}.transactions`, {}) 
-        const itemsTyped = get(transactionsMemorized, `${typeId}.items`, []) 
-        const transactions = {
-          ...transactionsMemorized,
-          [typeId]: {
-            typeName: type.name,
-            items: [
-              ...itemsTyped,
-              transaction,
-            ],
-          },
-        }
+        const transactionsMemorized = get(result, `${date}.transactions`, []) 
         return {
           ...result,
           [date]: {
             typeId,
             date,
-            transactions,
+            transactions: [
+              ...transactionsMemorized,
+              transaction,
+            ],
           },
         }
       }, {}))
@@ -222,6 +217,7 @@ export default {
       }
 
       this.categories = categories
+      this.updateCount += 1
     },
 
     setPeriod(categories) {
@@ -233,17 +229,7 @@ export default {
     },
 
     setStatistics(categories) {
-      const { mapValues } = this.$lodash
-      this.statistics = categories.reduce((result, { transactions }) => {
-        let categoryTransactions = []
-        mapValues(transactions, ({ items }) => {
-          categoryTransactions = [...categoryTransactions, ...items]
-        })
-        return [
-          ...result,
-          ...categoryTransactions,
-        ]
-      }, [])
+      this.statistics = this.account.transactions
     },
 
     showError(e) {
@@ -269,7 +255,7 @@ export default {
     },
 
     editTransaction(transaction) {
-      return () => this.openTransactionPopup(transaction)
+      return () => this.isUserNotViewer && this.openTransactionPopup(transaction)
     },
   },
 
@@ -314,6 +300,10 @@ export default {
     background-color: $darkGray;
     color: inherit;
     z-index: 2;
+
+    @media (--from-tablet) {
+      width: 360px;
+    }
   }
 }
 
@@ -321,7 +311,7 @@ export default {
   display: flex;
 
   > * {
-    width: 25%;
+    width: 20%;
     margin: 0;
     padding: 0 .75em 1em;
     color: #979797;
@@ -339,5 +329,20 @@ export default {
 
 .account-container {
   min-height: 360px;
+}
+
+.transactions-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: .7em;
+
+  @media (--from-tablet) {
+    width: 360px;
+  }
+
+  button {
+    margin-bottom: .5em;
+  }
 }
 </style>

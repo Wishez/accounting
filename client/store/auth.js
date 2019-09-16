@@ -1,7 +1,10 @@
+import { Roles } from '~/constants/user'
+
 export const state = () => ({
   isLoggedIn: false,
   user: {},
   isUserAdmin: false,
+  isUserViewer: true,
 })
 
 export const mutations = {
@@ -10,12 +13,13 @@ export const mutations = {
   },
   setCurrentProfile(state, userProfile) {
     state.user = userProfile
+    state.isUserAdmin = userProfile.role === Roles.ADMIN
+    state.isUserViewer = userProfile.role === Roles.VIEWER
   },
-  setAdminPrivilege(state, isUserAdmin) {
-    state.isUserAdmin = isUserAdmin
-  },
+  
   setLoggedOutState(state) {
     state.user = {}
     state.isUserAdmin = false
+    state.isUserViewer = true
   }
 }
