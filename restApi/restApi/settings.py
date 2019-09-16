@@ -98,13 +98,13 @@ WSGI_APPLICATION = 'restApi.wsgi.application'
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
 DATABASES = {
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.postgresql',
-    #     'NAME': 'postgres',
-    #     'USER': 'postgres',
-    #     'HOST': 'database',
-    #     'PORT': 5432,
-    # }
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'postgres',
+        'USER': 'postgres',
+        'HOST': 'database',
+        'PORT': 5851,
+    }
     # 'default': {
     #     'ENGINE': 'django.db.backends.postgresql_psycopg2',
     #     'NAME': os.getenv('POSTGRES_DB'),
@@ -113,7 +113,7 @@ DATABASES = {
     #     'HOST': os.getenv('POSTGRES_HOST'),
     #     'PORT': int(os.getenv('POSTGRES_PORT'))
     # },
-    'default': dj_database_url.parse(config('DATABASE_URL')),
+    # 'default': dj_database_url.parse(config('DATABASE_URL')),
 }
 
 
