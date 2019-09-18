@@ -7,28 +7,6 @@ networks:
   accounting-network:
 
 services:
-  nuxt:
-    build: ./client
-    container_name: accounting-ui
-    restart: always
-    ports:
-      - "0.0.0.0:3333:3333"
-    command: npm run start
-    networks: 
-      - accounting-network
-
-  # nginx:
-  #   image: nginx:1.13
-  #   container_name: accounting-ui-nginx
-  #   ports:
-  #     - "80:80"
-  #   volumes:
-  #     - ./nginx:/etc/nginx/conf.d
-  #   depends_on:
-  #     - nuxt
-  #   networks: 
-  #     - accounting-network
-
   rest:
     build: ./restApi
     env_file: ./restApi/.env
@@ -54,8 +32,6 @@ services:
       accounting-network:
         aliases:
           - database
-    # ports:
-    #   - 5432:5432
   
   graphql:
     build: ./server
@@ -71,3 +47,30 @@ services:
       accounting-network:
         aliases:
           - graphql-server
+
+  nuxt:
+    build: ./client
+    container_name: accounting-ui
+    restart: always
+    ports:
+      - "0.0.0.0:3333:3333"
+    command: npm run start
+    networks: 
+      accounting-network:
+        aliases:
+          - accounting-ui-server
+
+  nginx:
+    build: ./nginx
+    container_name: accounting-ui-nginx
+    ports:
+      - 80:80
+      - 443:443
+    # volumes:
+    #   - ./nginx:/etc/nginx/conf.d
+    depends_on:
+      - nuxt
+    networks: 
+      accounting-network:
+        aliases:
+          - ui-nginx
