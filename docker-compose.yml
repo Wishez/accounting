@@ -52,6 +52,12 @@ services:
     build: ./client
     container_name: accounting-ui
     restart: always
+    environment:
+      HOST: 0.0.0.0
+      APOLLO_SERVER_HTTP: 'http://graphql-server:4002/api'
+      APOLLO_CLIENT_HTTP: 'http://localhost:4002/api'
+      APOLLO_SERVER_WS: 'ws://graphql-server:4002/api'
+      APOLLO_CLIENT_WS: 'ws://localhost:4002/api'
     ports:
       - "0.0.0.0:3333:3333"
     command: npm run start

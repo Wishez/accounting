@@ -39,12 +39,8 @@ module.exports = {
   */
   build: {
     postcss: {
-      // Add plugin names as key and arguments as value
-      // Install them before as dependencies with npm or yarn
       plugins: {
-        // Disable a plugin by passing false as value 
         'postcss-url': false,
-        // 'postcss-nested': {},
         'postcss-custom-media': {
           importFrom: [
             {
@@ -58,15 +54,7 @@ module.exports = {
             }
           ]
         }
-        // 'postcss-responsive-type': {},
-        // 'postcss-hexrgba': {}
       },
-      // preset: {
-        // Change the postcss-preset-env settings
-      //   autoprefixer: {
-      //     grid: true
-      //   }
-      // }
     },
     /*
     ** Run ESLint on save
@@ -99,79 +87,13 @@ module.exports = {
   ],
 
   apollo: {
-    tokenName: 'access_token', // optional, default: apollo-token
-    cookieAttributes: {
-      /**
-        * Define when the cookie will be removed. Value can be a Number
-        * which will be interpreted as days from time of creation or a
-        * Date instance. If omitted, the cookie becomes a session cookie.
-        */
-      expires: 7, // optional, default: 7 (days)
+    tokenName: 'access_token', 
 
-      /**
-        * Define the path where the cookie is available. Defaults to '/'
-        */
-      path: '/api', // optional
-      /**
-        * Define the domain where the cookie is available. Defaults to
-        * the domain of the page where the cookie was created.
-        */
-      domain: 'http://localhost:4002/', // optional
-
-      /**
-        * A Boolean indicating if the cookie transmission requires a
-        * secure protocol (https). Defaults to false.
-        */
-      secure: false,
-    },
-    includeNodeModules: true, // optional, default: false (this includes graphql-tag for node_modules folder)
-
-    // (Optional) Default 'apollo' definition
-    defaultOptions: {
-      // See 'apollo' definition
-      // For example: default query options
-
-      // $watchQuery: {
-      //   fetchPolicy: 'network-only',
-      //   errorPolicy: 'ignore',
-      // },
-      // $query: {
-      //   fetchPolicy: 'network-only',
-      //   errorPolicy: 'all',
-      // },
-    },
-    // optional
     errorHandler: '~/plugins/apollo-error-handler.js',
-    // required
-    clientConfigs: {
-      default: {
-        // required
-        httpEndpoint: 'http://localhost:4002/api',
-        // optional
-        // See https://www.apollographql.com/docs/link/links/http.html#options
-        httpLinkOptions: {
-          credentials: 'same-origin'
-        },
 
-        ssr: true,
-        // You can use `wss` for secure connection (recommended in production)
-        // Use `null` to disable subscriptions
-        // wsEndpoint: 'ws://localhost:4000/api', // optional
-        // LocalStorage token
-        tokenName: 'access_token', // optional
-        // Enable Automatic Query persisting with Apollo Engine
-        persisting: false, // Optional
-        // Use websockets for everything (no HTTP)
-        // You need to pass a `wsEndpoint` for this to work
-        websocketsOnly: false // Optional
-      },
-      // test: {
-      //   httpEndpoint: 'http://localhost:5000',
-      //   wsEndpoint: 'ws://localhost:5000',
-      //   tokenName: 'access_token'
-      // },
-      // alternative: user path to config which returns exact same config options
-      // test2: '~/plugins/my-alternative-apollo-config.js'
+    clientConfigs: {
+      // https://stackoverflow.com/questions/55444881/how-to-link-a-nuxt-app-to-an-api-server-in-docker-compose
+      default: '~/plugins/apollo.js',
     }
   },
 }
