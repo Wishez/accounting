@@ -1,5 +1,5 @@
 <template>
-  <section v-if="authState.isLoggedIn" class="container">
+  <section v-if="authState.isLoggedIn" class="container personal-room">
     <h1>Профиль</h1>
 
     <form>

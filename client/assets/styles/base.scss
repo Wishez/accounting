@@ -116,11 +116,13 @@ input {
 }
 
 .error {
+  margin-bottom: 0;
   font-weight: bold;
   color: $red;
 }
 
 .success {
+  margin-bottom: 0;
   font-weight: bold;
 }
 
@@ -152,10 +154,6 @@ input {
   display: flex;
   align-items: center;
   margin-bottom: .25em;
-
-  &:last-of-type {
-    margin-bottom: 2em;
-  }
 }
 
 .radio-button {
@@ -203,7 +201,7 @@ input {
 }
 
 button[type="submit"] {
-  margin: 2em auto 0;
+  margin: 2em 0 0;
 }
 
 ul {
@@ -430,4 +428,8 @@ img {
   &__title {
     text-align: center;
   }
+}
+
+.login-page .passwordInputContainer, .personal-room .user-note {
+  margin-bottom: 0 !important;
 }

@@ -2,8 +2,6 @@
   <div v-if="auth.isLoggedIn" class="container">
     <transaction-types />
 
-    <account-filter :accountCategories="accountCategories" @change="updateCategories" />
-
     <section class="account-container">
       <div class="accountHeader">
         <h1 class="accountHeader__title">
@@ -24,6 +22,8 @@
 
         <base-statistics :isFadeOut="isDeletedTransactionsShown" hasLitter :key="updateCount" :transactions="this.statistics" :accountBalance="accountBalance" />
       </div>
+
+      <account-filter :accountCategories="accountCategories" @change="updateCategories" />
 
       <ul v-if="categories.length" class="account-transactions-categories">
         <li v-for="({ date, name, transactions }, index) in categories" :key="index + updateCount" class="account-transactions-category litter">

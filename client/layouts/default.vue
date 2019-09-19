@@ -137,11 +137,11 @@ export default {
 @import '~/assets/styles/base.scss';
 .holder {
   @media (--from-tablet) {
-    padding-bottom: 104px;
+    padding-bottom: 134px;
   }
 
   @media (--until-tablet) {
-    padding-bottom: 83px;
+    padding-bottom: 94px;
   }
 }
 

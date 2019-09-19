@@ -1,5 +1,5 @@
 <template>
-  <section class="container">
+  <section class="container login-page">
     <form v-if="!isLoggedIn" @submit.prevent="login">
       <h1>Авторизация</h1>
       <label for="username" id="emailLabel">
@@ -80,11 +80,3 @@ export default {
   },
 }
 </script>
-
-<style lang="scss" scoped>
-.submit-button {
-  button {
-    margin: 0;
-  }
-}
-</style>
