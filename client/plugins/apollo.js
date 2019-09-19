@@ -6,6 +6,12 @@ export default function() {
   }
 
   return {
+    cookieAttributes: {
+      expires: 7,
+      path: '/api',
+      domain: httpEndpoint.slice(0, -4),
+      secure: false,
+    },
     httpEndpoint,
     httpLinkOptions: {
       credentials: 'same-origin',
