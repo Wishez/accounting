@@ -4,7 +4,7 @@ volumes:
   postgres_data:
 
 networks:
-  accounting-network:
+  network:
 
 services:
   rest:
@@ -18,7 +18,7 @@ services:
     ports:
       - 0.0.0.0:8091:8091
     networks: 
-      accounting-network:
+      network:
         aliases:
           - rest-api
     depends_on:
@@ -29,7 +29,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     networks: 
-      accounting-network:
+      network:
         aliases:
           - database
   
@@ -44,7 +44,7 @@ services:
     ports:
       - 0.0.0.0:4002:4002
     networks: 
-      accounting-network:
+      network:
         aliases:
           - graphql-server
 
@@ -62,7 +62,7 @@ services:
       - "0.0.0.0:3333:3333"
     command: npm run start
     networks: 
-      accounting-network:
+      network:
         aliases:
           - accounting-ui-server
 
@@ -72,11 +72,9 @@ services:
     ports:
       - 80:80
       - 443:443
-    # volumes:
-    #   - ./nginx:/etc/nginx/conf.d
     depends_on:
       - nuxt
     networks: 
-      accounting-network:
+      network:
         aliases:
           - ui-nginx
