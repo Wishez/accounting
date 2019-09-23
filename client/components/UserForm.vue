@@ -204,10 +204,7 @@ export default {
         const { email } = response
         if (password || oldEmail !== email) {
           const updateTokenResponse = await this.makeAuthRequest(email, password || this.currentPassword)
-
-          const { access, refresh } = updateTokenResponse
-          this.$cookies.set('access_token', access)
-          this.$cookies.set('refresh_token', refresh)
+          await this.$apolloHelpers.onLogin(updateTokenResponse.access)
         }
       }
       } catch (e) {

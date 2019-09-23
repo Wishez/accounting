@@ -58,10 +58,8 @@ export default {
         .catch(() => this.handleError('Неудалось авторизоваться'))
         const email = this.$lodash.get(response, 'email')
         if (email) {
-          fetechUserProfile.call(this, email)
-          const { access, refresh } = response
-          this.$cookies.set('access_token', access)
-          this.$cookies.set('refresh_token', refresh)
+          await this.$apolloHelpers.onLogin(response.access)
+          await fetechUserProfile.call(this, email)
           this.$router.push('/')
         }
       } catch (e) {

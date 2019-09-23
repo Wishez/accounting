@@ -4,12 +4,11 @@
 
 <script>
 export default {
-  beforeMount() {
-    this.$cookies.remove('access_token')
-    this.$cookies.remove('refresh_token')
-    this.$store.commit('auth/setLoggedInState', false)
-    this.$store.commit('auth/setLoggedOutState')
-    this.$apolloHelpers.onLogout()
+  async beforeMount() {
+    const { commit } = this.$store
+    await this.$apolloHelpers.onLogout()
+    commit('auth/setLoggedInState', false)
+    commit('auth/setLoggedOutState')
     this.$router.push('/login')
   }
 }
