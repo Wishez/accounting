@@ -14,7 +14,7 @@ services:
     container_name: accounting-rest-api-server
     command: python /src/manage.py runserver 0.0.0.0:8091
     volumes:
-      - .:/app
+      - ./restApi:/src
     ports:
       - 0.0.0.0:8091:8091
     networks: 
@@ -40,7 +40,7 @@ services:
     env_file: ./server/.env
     command: npm run start
     volumes:
-      - .:/app
+      - ./server:/src
     ports:
       - 0.0.0.0:4002:4002
     networks: 
@@ -55,9 +55,11 @@ services:
     environment:
       HOST: 0.0.0.0
       APOLLO_SERVER_HTTP: 'http://graphql-server:4002/api'
-      APOLLO_CLIENT_HTTP: 'http://localhost:4002/api'
-      APOLLO_SERVER_WS: 'ws://graphql-server:4002/api'
-      APOLLO_CLIENT_WS: 'ws://localhost:4002/api'
+      APOLLO_CLIENT_HTTP: 'http://shining-present.ru:4002/api'
+      # APOLLO_CLIENT_HTTP: 'http://localhost:4002/api'
+      APOLLO_COOKIE_DOMAIN: 'shining-present.ru'
+      # APOLLO_COOKIE_DOMAIN: 'localhost'
+
     ports:
       - "0.0.0.0:3333:3333"
     command: npm run start
@@ -70,8 +72,7 @@ services:
     build: ./nginx
     container_name: accounting-ui-nginx
     ports:
-      - 80:80
-      - 443:443
+      - 8443:8443
     depends_on:
       - nuxt
     networks: 
