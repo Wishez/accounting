@@ -89,6 +89,15 @@ module.exports = {
   apollo: {
     tokenName: 'access_token', 
 
+    cookieAttributes: {
+      expires: 7,
+      path: '/',
+      domain: process.env.APOLLO_COOKIE_DOMAIN,
+      secure: false,
+    },
+    
+    authenticationType: 'Bearer',
+
     errorHandler: '~/plugins/apollo-error-handler.js',
 
     clientConfigs: {
