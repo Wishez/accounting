@@ -38,7 +38,7 @@ services:
     restart: always
     container_name: accounting-graphql-server
     env_file: ./server/.env
-    command: npm run start
+    command: npm run start:ci
     volumes:
       - ./server:/src
     ports:
