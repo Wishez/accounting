@@ -38,9 +38,7 @@ services:
     restart: always
     container_name: accounting-graphql-server
     env_file: ./server/.env
-    command: npm run start:ci
-    volumes:
-      - ./server:/src
+    command: npm run start
     ports:
       - 0.0.0.0:4002:4002
     networks: 
@@ -56,9 +54,7 @@ services:
       HOST: 0.0.0.0
       APOLLO_SERVER_HTTP: 'http://graphql-server:4002/api'
       APOLLO_CLIENT_HTTP: 'http://shining-present.ru:4002/api'
-      # APOLLO_CLIENT_HTTP: 'http://localhost:4002/api'
-      APOLLO_COOKIE_DOMAIN: 'shining-present.ru'
-      # APOLLO_COOKIE_DOMAIN: 'localhost'
+      APOLLO_COOKIE_DOMAIN: 'shining-present.ru' #'localhost'
 
     ports:
       - "0.0.0.0:3333:3333"
