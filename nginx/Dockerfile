@@ -17,7 +17,7 @@ RUN chown -R www-data:www-data /var/lib/nginx
 VOLUME ["/etc/nginx/sites-enabled", "/etc/nginx/certs", "/var/log/nginx"]
 
 # expose ports
-EXPOSE 80 443
+EXPOSE 8443
 
 # add nginx conf
 ADD ./nginx.conf /etc/nginx/conf.d/default.conf
