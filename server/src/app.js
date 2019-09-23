@@ -12,6 +12,7 @@ const schemaString = require('./schema')
 
 const AccountingAPI = require('./datasources/accounting')
 const AuthAPI = require('./datasources/auth').api
+const env = require('./env')
 
 const resolvePath = (pathTo) =>
   path.join(path.normalize(process.cwd()), pathTo)
@@ -38,7 +39,8 @@ app.use(bodyParser.urlencoded({ extended: false }))
 const graphqlPath = '/api' 
 server.applyMiddleware({ app, path: graphqlPath })
 
-const PORT = 4002
-app.listen({ port: PORT }, () => {
-    console.log(`🚀 Server ready at http://localhost:${PORT}${server.graphqlPath}`)
+const port = env.APP_PORT || 4002
+const host = env.APP_HOST
+app.listen({ port, host }, () => {
+    console.log(`🚀 Server ready at http://${host || 'localhost'}:${port}${server.graphqlPath}`)
 })
