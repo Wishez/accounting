@@ -26,8 +26,8 @@ export async function fetechUserProfile(email) {
     variables: { email },
   }).then(({ data }) => data.profile.data)
     .catch((e) => console.log('Не получилось запросить данные аккаунта', e.message))
+
   const isSuccess = this.$lodash.get(profileResponse, 'id')
-  console.log(profileResponse.isDeleted)
   if (isSuccess && profileResponse.isDeleted) this.$router.push('/logout')
   else if (isSuccess) commit('auth/setCurrentProfile', profileResponse)
   else this.$router.push('/logout')

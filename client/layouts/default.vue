@@ -91,7 +91,7 @@ export default {
   },
 
   beforeMount() {
-      const token = this.$cookies.get('access_token')
+      const token = this.$apolloHelpers.getToken()
       if (token) this.verifyAuth(token)
       else this.redirectToLoginPage()
   },
