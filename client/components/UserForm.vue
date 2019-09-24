@@ -238,7 +238,7 @@ export default {
     },
 
     handleResponse({ data: responseData }, requestName) {
-      const { isSuccess, data } = responseData[requestName]
+      const { isSuccess, data } = responseData[requestName] || {}
       return isSuccess ? data : this.showRequestError()
     },
 

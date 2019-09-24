@@ -92,7 +92,7 @@ export default {
     accounts: {
       query: getAccountsRequestGql,
 
-      update({ accounts }) {
+      update({ accounts = {} }) {
         return accounts.isSuccess ? accounts.data : []
       }
     }
@@ -161,7 +161,7 @@ export default {
           }
         }).then(({ data }) => data.deleteAccount)
   
-        if (result.isSuccess) this.refetchAccounts()
+        if (this.$lodash.get(result, 'isSuccess')) this.refetchAccounts()
       }
     },
   },

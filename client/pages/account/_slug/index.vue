@@ -90,7 +90,7 @@ export default {
         }
       },
 
-      update({ account }) {
+      update({ account = {} }) {
         return account.isSuccess ? account.data : {}
       } 
     },
@@ -104,7 +104,7 @@ export default {
         }
       },
 
-      update({ transactionType }) {
+      update({ transactionType = {} }) {
         return transactionType.isSuccess ? transactionType.data : {}
       },
 

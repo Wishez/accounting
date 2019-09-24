@@ -80,7 +80,7 @@ export default {
     },
 
     handleAccountResponse({ data: responseData }, requestName) {
-      const { isSuccess, data } = responseData[requestName]
+      const { isSuccess, data } = responseData[requestName] || {}
       return isSuccess ? data : this.showErrorAccountRequest()
     },
 

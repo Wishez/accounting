@@ -86,7 +86,7 @@ export default {
     transactionsTypes: {
       query: getTransactionsTypesGql,
 
-      update({ transactionsTypes }) {
+      update({ transactionsTypes = {} }) {
         return transactionsTypes.isSuccess ? transactionsTypes.data : []
       }
     },
@@ -224,7 +224,7 @@ export default {
     },
 
     handleResponse({ data: responseData }, requestName) {
-      const { isSuccess, data } = responseData[requestName]
+      const { isSuccess, data } = responseData[requestName] || {}
       return isSuccess ? data : this.showRequestError()
     },
 
@@ -269,7 +269,7 @@ export default {
         .then(({ data }) => data.deleteTransaction)
         .catch(() => this.handleError('Не удалось удалить транзакцию'))
       
-      if (result.isSuccess) this.closePopup()
+      if (this.$lodash.get(result, 'isSuccess')) this.closePopup()
     },
 
     handleError(message) {

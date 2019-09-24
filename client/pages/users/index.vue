@@ -101,7 +101,7 @@ export default {
       query: getProfilesGql,
 
       update({ profiles }) {
-        const { isSuccess, data } = profiles
+        const { isSuccess, data } = profiles || {}
         data.forEach((user) => this.createUserPayloadIfNeeded(user.id, user))
         return isSuccess ? data : []
       },
@@ -144,7 +144,7 @@ export default {
               uuid: id,
             }
           }).then(({ data: responseData }) => {
-            const { isSuccess, data } = responseData.deleteProfile
+            const { isSuccess, data } = responseData.deleteProfile || {}
             if (isSuccess) this.refetchProfieles()
             else this.showRequestError(id)
             return data
@@ -166,7 +166,7 @@ export default {
               payload: this.$lodash.omit(this.payloads[id], ['isError', 'isSuccess', 'id'])
             }
           }).then(({ data: responseData }) => {
-            const { isSuccess, data } = responseData.updateProfile
+            const { isSuccess, data } = responseData.updateProfile || {}
             if (isSuccess) this.showSuccess(id)
             else this.showRequestError(id)
             return data
