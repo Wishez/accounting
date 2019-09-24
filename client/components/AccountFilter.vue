@@ -78,7 +78,7 @@ export default {
     transactionsTypes: {
       query: getTransactionsTypesGql,
 
-      update({ transactionsTypes }) {
+      update({ transactionsTypes = {} }) {
         return transactionsTypes.isSuccess ? transactionsTypes.data : []
       },
 

@@ -45,7 +45,7 @@ export default {
   apollo: {
     transactionsTypes: {
       query: getTransactionsTypesGql,
-      update({ transactionsTypes }) {
+      update({ transactionsTypes = {} }) {
         return transactionsTypes.isSuccess ? transactionsTypes.data : []
       }
     },

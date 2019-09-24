@@ -92,7 +92,7 @@ export default {
     },
 
     handleTransactionTypeResponse({ data: responseData }, requestName) {
-      const { isSuccess, data } = responseData[requestName]
+      const { isSuccess, data } = responseData[requestName] || {}
       return isSuccess ? data : this.showErrorTransactionTypeRequest()
     },
 
@@ -136,7 +136,7 @@ export default {
         .then(({ data }) => data.deleteTransactionType)
         .catch(() => this.handleError('Не удалось удалить транзакцию'))
       
-      if (result.isSuccess) this.closePopup()
+      if (this.$lodash.get(result, 'isSuccess')) this.closePopup()
     },
 
     handleError(message) {
