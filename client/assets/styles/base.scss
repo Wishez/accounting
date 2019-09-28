@@ -74,7 +74,6 @@ p {
 form {
   max-width: 466px;
   margin: 2em auto;
-  padding: 1.5em 2em 2em;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -82,6 +81,14 @@ form {
   background-color: #fff;
   border: 3px solid $darkGray;
   box-shadow: 0 0 10px rgba(#333, .5);
+
+  @media (--from-tablet) {
+    padding: 1.5em 2em 2em;
+  }
+
+  @media (--until-tablet) {
+    padding: 1em 1em 1.5em;
+  }
 
   h1 {
     font-size: 28px;
@@ -330,7 +337,6 @@ img {
 }
 
 .popupLitter form {
-  height: 100%;
   margin: 0;
 }
 

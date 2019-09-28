@@ -150,15 +150,12 @@ header {
 }
 
 .mainTitle {
-  display: flex;
+  display: block;
   font-weight: bold;
   padding-top: .5em;
 
   &__link {
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    text-decoration: none;
+    display: block;
     margin: auto;
     
     &:visited {
