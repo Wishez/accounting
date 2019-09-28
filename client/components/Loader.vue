@@ -44,13 +44,14 @@ export default {
   }
 
   .logo-holder {
-    display: inherit;
+    display: inline-block;
   }
 
   .logo {
     width: 45px;
     position: relative;
-    top: -5px;
+    top: 6px;
+    display: inline-block;
 
     &_loader {
       width: calc(100% + 1em);
