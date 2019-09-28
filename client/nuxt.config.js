@@ -1,12 +1,10 @@
-const env = require('dotenv').config().parsed
-
 module.exports = {
   css: [
     '~/assets/fonts/fonts.scss',
   ],
 
   server: {
-    port: 3333,
+    port: process.env.APP_PORT || 3333,
   },
 
   plugins: [
