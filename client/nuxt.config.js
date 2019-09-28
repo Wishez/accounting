@@ -1,3 +1,5 @@
+const env = require('dotenv').config().parsed
+
 module.exports = {
   css: [
     '~/assets/fonts/fonts.scss',
@@ -33,7 +35,7 @@ module.exports = {
   /*
   ** Customize the progress bar color
   */
-  loading: { color: '#3B8070' },
+  loading: { color: '#ffffff' },
   /*
   ** Build configuration
   */
@@ -92,7 +94,7 @@ module.exports = {
     cookieAttributes: {
       expires: 7,
       path: '/',
-      domain: process.env.APOLLO_COOKIE_DOMAIN,
+      domain: 'localhost',
       secure: false,
     },
     
