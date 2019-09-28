@@ -20,8 +20,14 @@ VOLUME ["/etc/nginx/sites-enabled", "/etc/nginx/certs", "/var/log/nginx"]
 EXPOSE 8443
 
 # add nginx conf
-ADD ./nginx.conf /etc/nginx/conf.d/default.conf
+COPY ./conf.d/ /etc/nginx/conf.d/
+COPY ./nginx.conf /etc/nginx/conf.d/default.conf
+COPY ./locale /etc/nginx/conf.d/locale
 
 WORKDIR /etc/nginx
+
+RUN echo "proxy_connect_timeout   200;" > /etc/nginx/conf.d/custom_timeout.conf
+RUN echo "proxy_send_timeout      200;" > /etc/nginx/conf.d/custom_timeout.conf
+RUN echo "proxy_read_timeout      200;" > /etc/nginx/conf.d/custom_timeout.conf
 
 CMD ["nginx"]
