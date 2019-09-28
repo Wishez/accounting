@@ -153,6 +153,7 @@ header {
   display: block;
   font-weight: bold;
   padding-top: .5em;
+  text-align: center;
 
   &__link {
     display: block;
