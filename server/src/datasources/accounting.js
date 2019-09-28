@@ -17,7 +17,7 @@ const sortByDate = (items, dateFieldName) => {
 class AccountingAPI extends RESTDataSource {
   constructor() {
     super()
-    this.baseURL = env.ACCOUNTING_API_URL
+    this.baseURL = env.TEST_ACCOUNTING_API_URL || env.ACCOUNTING_API_URL
   }
 
   willSendRequest(request) {

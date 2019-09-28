@@ -4,11 +4,12 @@ const get = require('lodash/get')
 const env = require('../env')
 const axios = require('axios')
 
+console.log(env)
 const getParsedToken = (token) => jwt.decode(token, {complete: true})
 class AuthAPI extends RESTDataSource {
     constructor() {
         super()
-        this.baseURL = env.AUTH_API_URL
+        this.baseURL = env.TEST_AUTH_API_URL || env.AUTH_API_URL
     }
 
     async auth(email, password) {

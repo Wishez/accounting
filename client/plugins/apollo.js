@@ -1,8 +1,7 @@
 export default function() {
-  let httpEndpoint = process.env.APOLLO_SERVER_HTTP || 'http://localhost:4002/api';
-
+  let httpEndpoint = process.env.TEST_APOLLO_SERVER_HTTP || process.env.APOLLO_SERVER_HTTP || 'http://localhost:8444/api'
   if (process.client) {
-    httpEndpoint = process.env.APOLLO_CLIENT_HTTP || 'http://localhost:4002/api'
+    httpEndpoint = 'http://localhost:8444/api'
   }
 
   return {
