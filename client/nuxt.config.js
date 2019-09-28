@@ -1,3 +1,5 @@
+import { apolloCookieDomain } from './config'
+
 module.exports = {
   css: [
     '~/assets/fonts/fonts.scss',
@@ -92,7 +94,7 @@ module.exports = {
     cookieAttributes: {
       expires: 7,
       path: '/',
-      domain: 'localhost',
+      domain: apolloCookieDomain,
       secure: false,
     },
     
