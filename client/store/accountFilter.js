@@ -1,7 +1,7 @@
 export const state = () => ({
   untilDate: undefined,
   sinceDate: undefined,
-  type: {},
+  filterType: {},
 })
 
 export const mutations = {

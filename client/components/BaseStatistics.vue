@@ -177,10 +177,13 @@ p {
 
   &_litter {
     padding: 1em;
-    margin: 0 -1em;
     background-color: $darkGray;
     color: $white;
     z-index: 3;
+
+    @media (--until-tablet) {
+      width: 100%;
+    }
 
     input {
       color: inherit;

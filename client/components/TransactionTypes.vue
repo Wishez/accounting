@@ -1,8 +1,8 @@
 <template>
-  <section v-if="!auth.isUserViewer" class="transactionTypesContainer">
+  <section v-if="!isUserViewer" class="transactionTypesContainer">
     <h1>Типы транзакций</h1>
 
-    <div class="actions_near">
+    <div class="actions_near litter">
       <base-button :action="toggleTransactionTypes" class="action-button" unstyled>
         Посмотреть {{isDeletedShown ? 'действующие' : 'удалённые' }} типы
       </base-button>
@@ -29,6 +29,7 @@
 </template>
 
 <script>
+import { mapState } from 'vuex'
 import { popupsNames } from '~/constants/popups'
 import { getTransactionsTypesGql } from '~/constants/gql'
 import { ModalContainer, TransactionTypeForm } from '~/components'
@@ -47,14 +48,16 @@ export default {
       query: getTransactionsTypesGql,
       update({ transactionsTypes = {} }) {
         return transactionsTypes.isSuccess ? transactionsTypes.data : []
-      }
+      },
+
+      fetchPolicy: 'network-only',
     },
   },
 
   computed: {
-    auth() {
-      return this.$store.state.auth
-    },
+    ...mapState('auth', [
+      'isUserViewer'
+    ]),
   },
 
   data: () => ({

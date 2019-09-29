@@ -126,18 +126,16 @@ export default {
   pointer-events: auto
 
 .popupLitter
+  height: auto
   margin: auto;
   transition-duration: 300ms
   transition-timing-function: $standart
   position: relative
 
-  
-  @media (--from-mobile)
-    height: auto
+  @media (--from-tablet)
     width: 320px
 
-  @media (--until-mobile)
-    height: 100%
+  @media (--until-tablet)
     width: 100%
   
   &__closeButton

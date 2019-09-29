@@ -37,6 +37,7 @@
 </template>
 
 <script>
+import { mapState } from 'vuex'
 import { createTransactionTypeGql, updateTransactionTypeGql, getTransactionTypeGql, deleteTransactionTypeGql } from '~/constants/gql'
 import { popupsNames } from '~/constants/popups'
 import ColorField from './ColorField'
@@ -48,6 +49,8 @@ export default {
   },
 
   computed: {
+    ...mapState('auth', ['isLoggedIn']),
+
     transactionType() {
       return this.$lodash.get(this.$store.state.popups.payload, popupsNames.TRANSACTION_TYPE, {})
     },
@@ -60,10 +63,6 @@ export default {
       return Boolean(this.transactionType.isDeleted)
     },
 
-    isLoggedIn() {
-      return this.$store.state.auth.isLoggedIn
-    },
-    
     payload() {
       const { slug = '', name = '', color = '' } = this.transactionType
       return {

@@ -140,6 +140,7 @@ export default {
 
 
     &:hover, &:focus
+      outline: 0
       transform: scale(1.02)
 
     &:active

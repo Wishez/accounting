@@ -272,24 +272,49 @@ ul {
   font-size: 16px;
   transition: 150ms $sharp;
 
+  @media (--until-tablet) {
+    flex-wrap: wrap;
+  }
+
   &:hover, &:focus {
     background-color: rgba($red, .1);
     outline: 0;
   }
 
-  
   > * {
-    width: 20%;
-    min-height: 100px;
     height: 100%;
     margin: 0;
     padding: 1em .75em 1.25em;
     border-right: 1px solid $darkGray;
     display: flex;
     align-items: center;
+    padding: .75em .75em .85em;
+
+    @media (--from-tablet) {
+      width: 20%;
+      min-height: 100px;
+    }
+
+    @media (--until-tablet) {
+      min-width: 50%;
+      min-height: 64px;
+      border-bottom: 1px solid $darkGray;
+    }
+
+    &:nth-child(2), &:nth-child(4) {
+
+      @media (--until-tablet) {
+        border-right: 0;
+      }
+    }
 
     &:last-child {
       border-right: 0;
+      justify-content: center;
+
+      @media (--until-tablet) {
+        width: 100%;
+      }
     }
   }
 }
@@ -299,14 +324,35 @@ section {
 }
 
 .fields {
-  margin: 0 -1em 3em;
+  margin: 0 -1em 1em;
   display: flex;
   align-items: flex-end;
   position: relative;
   z-index: 1000;
+  
+  @media (--until-tablet) {
+    padding: 0 1em;
+    flex-flow: row wrap;
+  }
 
   > * {
-    margin: 0 1em;
+
+    @media (--from-tablet) {
+      margin: 0 1em;
+    }
+
+    &:not(:last-child) {
+
+      @media (--until-tablet) {
+        margin-bottom: 1em;
+      }
+    }
+
+    &:last-child {
+      @media (--until-tablet) {
+        margin: .5em auto 0;
+      }
+    }
 
     input, .datepicker-input {
       margin-bottom: 0 !important;
@@ -328,16 +374,27 @@ img {
 }
 
 .litter {
-  width: calc(100% + 1em);
-  padding: 1em;
+  padding: 1em 1em 1.4em;
   margin: 0;
   box-shadow: 0 0 10px rgba(#333, .5);
   background-color: white;
   margin-bottom: 1em;
+
+  &_increased {
+    @media (--from-tablet) {
+      width: calc(100% + 1em);
+    }
+  }
 }
 
 .popupLitter form {
   margin: 0;
+
+  > * {
+    @media (--until-tablet) {
+      width: 100%;
+    }
+  }
 }
 
 .actions {
@@ -345,20 +402,21 @@ img {
   @media (--from-tablet) {
     margin-bottom: 2em;
   }
-
+  
   @media (--until-tablet) {
     flex-wrap: wrap;
     margin-bottom: 1.25em;
   }
-
+  
   &_near {
     margin-bottom: 1em;
+    flex-wrap: wrap;
 
     a {
       text-decoration: none;
     }
   }
-
+  
   input {
     margin: 0;
     background-color: transparent;
