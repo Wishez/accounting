@@ -9,7 +9,7 @@
           :defaultValue="defaultValue"
           @selected="validateSelection"
           placeholder="Тип транзакции"
-          :filterValue="$store.state.accountFilter.type"
+          :filterValue="filterType"
           withFilter
         />
 
@@ -70,6 +70,7 @@
 </template>
 
 <script>
+import { mapState } from 'vuex'
 import { getTransactionsTypesGql } from '~/constants/gql'
 
 export default {
@@ -84,7 +85,9 @@ export default {
 
       skip() {
         return Boolean(this.accountCategories)
-      }
+      },
+
+      fetchPolicy: 'network-only',
     },
   },
 
@@ -104,7 +107,9 @@ export default {
     defaultValue() {
       const defaultType = this.queryType
       return this.types.find(({ slug }) => slug === defaultType)
-    }
+    },
+
+    ...mapState('accountFilter', ['filterType']),
   },
 
   data: () => ({
@@ -122,7 +127,7 @@ export default {
     },
 
     validateSelection(selection) {
-      this.changeFilter('type', selection)
+      this.changeFilter('filterType', selection)
     },
 
     onChangeDate(dateFieldName) {
@@ -143,13 +148,8 @@ export default {
     },
 
     clearType() {
-      this.changeFilter('type', {})
+      this.changeFilter('filterType', {})
     }
-  },
-
-  created() {
-    const { date } = this.$store.state.accountFilter
-    this.date = date ? new Date(date) : date
   },
 }
 </script>

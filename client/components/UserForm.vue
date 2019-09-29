@@ -83,6 +83,7 @@
 </template>
 
 <script>
+import { mapState } from 'vuex'
 import { createProfileGql, updateProfileGql, authenticateUserGql } from '~/constants/gql'
 import { popupsNames } from '~/constants/popups'
 import { roles, fetechUserProfile } from '~/constants/user'
@@ -91,13 +92,7 @@ import { pluck, map } from 'rxjs/operators'
 export default {
   name: 'UserForm',
   computed: {
-    isLoggedIn() {
-      return this.$store.state.auth.isLoggedIn
-    },
-
-    user() {
-      return this.$store.state.auth.user
-    },
+    ...mapState('auth', ['isLoggedIn', 'user']),
 
     payload() {
       if (this.isEdit) {

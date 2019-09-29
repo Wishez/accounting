@@ -1,5 +1,5 @@
 <template>
-  <div v-if="auth.isLoggedIn" class="container">
+  <div v-if="isLoggedIn" class="container">
     <transaction-types />
 
     <section class="accountsTiles">
@@ -7,7 +7,7 @@
 
       <loader v-if="isSearchLoading" />
 
-      <div class="actions_near actions accounts-actions">
+      <div class="actions_near actions accounts-actions litter">
         <base-button v-if="isUserNotViewer" :action="toggleAccounts" class-name="action-button" unstyled>
             Посмотреть {{isDeletedShown ? 'действующие' : 'удалённые'}} счета
         </base-button>
@@ -71,6 +71,7 @@
 </template>
 
 <script>
+import { mapState } from 'vuex'
 import { ModalContainer, AccountForm, TransactionTypes } from '~/components'
 import { popupsNames } from '~/constants/popups'
 import { getAccountsRequestGql, deleteAccountGql } from '~/constants/gql'
@@ -99,12 +100,10 @@ export default {
   },
 
   computed: {
-    auth() {
-      return this.$store.state.auth
-    },
+    ...mapState('auth', ['isUserViewer', 'isLoggedIn']),
 
     isUserNotViewer() {
-      return !this.auth.isUserViewer
+      return !this.isUserViewer
     }
   },
 

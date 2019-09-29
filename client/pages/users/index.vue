@@ -1,8 +1,8 @@
 <template>
-  <div v-if="auth.isUserAdmin" class="container">
+  <div v-if="isUserAdmin" class="container">
     <section class="users-section">
       <h1>Пользователи</h1>
-      <div class="actions_near">
+      <div class="actions_near litter">
         <base-button :action="toggleUsers" class="action-button" unstyled>{{isDeletedShown ? 'Действующие' : 'Удалённые'}} пользователи</base-button>
 
         <base-button :action="openUserDialog" class="action-button" unstyled>Создать пользователя</base-button>
@@ -25,12 +25,12 @@
           :key="index + updateCount"
           class="user-item"
         >
-          <h2 @input="(event) => setUserName(event, id)" :contenteditable="auth.isUserAdmin  && auth.user.id !== id">
+          <h2 @input="(event) => setUserName(event, id)" :contenteditable="isUserAdmin  && user.id !== id">
             {{payloads[id].name}}
           </h2>
           <p>Аккаунт создан: {{new Date(dateJoined) | formatDate('DD MMMM YYYYг.')}}</p>
 
-          <p v-if="!auth.isUserAdmin || auth.user.id === id">Email: {{email}}</p>
+          <p v-if="!isUserAdmin || user.id === id">Email: {{email}}</p>
           <p v-else>  
             <base-field
               v-model="payloads[id].email"
@@ -42,7 +42,7 @@
             />
           </p>
           
-          <p v-if="auth.user.id !== id" class="roleFieldContainer">
+          <p v-if="user.id !== id" class="roleFieldContainer">
             <base-dropdown
               labelText="Роль:"
               :options="roles"
@@ -59,7 +59,7 @@
           <p v-if="$lodash.get(payloads[id], 'isError')" class="error">{{errorMessage}}</p>
           <p v-if="$lodash.get(payloads[id], 'isSuccess')">{{successMessage}}</p>
 
-          <div v-if="id !== auth.user.id && auth.isUserAdmin" class="userActions">
+          <div v-if="id !== user.id && isUserAdmin" class="userActions">
             <base-button :action="editUser(id)">Обновить</base-button>
             <base-button :action="deleteUser(id)" unstyled>
               {{isDeletedShown ? 'Восстановить' : 'Удалить'}}
@@ -81,6 +81,7 @@
 </template>
 
 <script>
+import { mapState } from 'vuex'
 import { getProfilesGql, updateProfileGql, deleteProfileGql } from '~/constants/gql'
 import { popupsNames } from '~/constants/popups'
 import { Roles, RolesMap, roles } from '~/constants/user'
@@ -122,11 +123,9 @@ export default {
     isDeletedShown: false,
     isSearchLoading: false,
   }),
-  computed: {
-    auth() {
-      return this.$store.state.auth
-    }
-  },
+
+  computed: mapState('auth', ['user', 'isUserAdmin']),
+
   methods: {
     validateSelection(userId, selection) {
       this.createUserPayloadIfNeeded(userId)
@@ -260,7 +259,10 @@ p {
   margin: 0 0 .5em;
 
   &:last-of-type {
-    margin-bottom: 1.25em;
+
+    @media (--from-tablet) {
+      margin-bottom: 1.25em;
+    }
   }
 }
 
@@ -293,6 +295,12 @@ p {
 
   @media (--until-tablet) {
     margin: .5em 0;
+  }
+
+  > * {
+    @media (--until-tablet) {
+      width: 100%;
+    }
   }
   
   button {

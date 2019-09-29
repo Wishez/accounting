@@ -76,6 +76,7 @@
 </template>
 
 <script>
+import { mapState } from 'vuex'
 import { createTransactionGql, updateTransactionGql, getTransactionsTypesGql, deleteTransactionGql } from '~/constants/gql'
 import { popupsNames } from '~/constants/popups'
 import { pluck, map } from 'rxjs/operators';
@@ -92,12 +93,10 @@ export default {
     },
   },
   computed: {
+    ...mapState('auth', ['isLoggedIn']),
+
     transaction() {
       return this.$lodash.get(this.$store.state.popups.payload, popupsNames.TRANSACTION, {})
-    },
-
-    isLoggedIn() {
-      return this.$store.state.auth.isLoggedIn
     },
 
     isDeleted() {

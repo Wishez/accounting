@@ -1,5 +1,5 @@
 <template>
-  <div v-if="auth.isLoggedIn" class="container">
+  <div v-if="isLoggedIn" class="container">
     <transaction-types />
 
     <section class="account-container">
@@ -7,9 +7,9 @@
         <h1 class="accountHeader__title">
           {{$lodash.get(account, 'name')}}
         
-          <div v-if="sinceDate && untilDate" class="transactions-period">
-            От <strong>{{sinceDate | formatDate('DD MMMM YYYY')}}</strong> 
-            по <strong>{{untilDate | formatDate('DD MMMM YYYY')}}</strong>
+          <div v-if="shownTransactionsSinceDate && shownTransactionsUntilDate" class="transactions-period">
+            От <strong>{{shownTransactionsSinceDate | formatDate('DD MMMM YYYY')}}</strong> 
+            по <strong>{{shownTransactionsUntilDate | formatDate('DD MMMM YYYY')}}</strong>
           </div>
         </h1>
 
@@ -53,10 +53,21 @@
       <loader v-else-if="$apollo.queries.account.loading" />
 
       <p v-if="!categories.length" class="litter">
-        <span v-if="!filter.date && !filter.type.id">На счету нет транзакиций</span>
-        <span v-else-if="filter.type.name && !filter.date">Нет транзакций с типом «{{filter.type.name}}»</span>
-        <span v-else-if="!filter.type.name && filter.date">Нет транзакций созданных {{filter.date | formatDate('MM.YYYY')}}</span>
-        <span v-else>Нет транзакций с типом «{{filter.type.name}}» созданных {{filter.date | formatDate('MM.YYYY')}}</span>
+        <span v-if="!untilDate && !sinceDate && !filterType.id">
+          На счету нет транзакиций.
+        </span>
+        <span v-else-if="filterType.name && !untilDate && !sinceDate">
+          Нет транзакций с типом «{{filterType.name}}».
+        </span>
+        <span v-else-if="!filterType.name && untilDate">
+          Нет транзакций созданных до {{untilDate | formatDate('MM.YYYY')}}.
+        </span>
+        <span v-else-if="!filterType.name && sinceDate">
+          Нет транзакций созданных по {{sinceDate | formatDate('MM.YYYY')}}.
+        </span>
+        <span v-else>
+          Нет транзакций с типом «{{filterType.name}}» созданных от {{sinceDate | formatDate('MM.YYYY')}} по {{untilDate | formatDate('MM.YYYY')}}.
+        </span>
       </p>
 
       <p v-if="$apollo.queries.account.error || $apollo.queries.transactionType.error" class="error">
@@ -71,6 +82,7 @@
 </template>
 
 <script>
+import { mapState } from 'vuex'
 import { popupsNames } from '~/constants/popups'
 import { getAccountGql, getTransactionTypeGql } from '~/constants/gql'
 import { ModalContainer, TransactionForm, TransactionTypes, AccountFilter } from '~/components'
@@ -131,26 +143,21 @@ export default {
     statistics: [],
     accountCategories: [],
     isDeletedTransactionsShown: false,
-    sinceDate: undefined,
-    untilDate: undefined,
+    shownTransactionsSinceDate: undefined,
+    shownTransactionsUntilDate: undefined,
   }),
 
   computed: {
-    auth() {
-      return this.$store.state.auth
-    },
+    ...mapState('auth', ['isUserViewer', 'isLoggedIn']),
+    ...mapState('accountFilter', ['sinceDate', 'untilDate', 'filterType']),
 
     isUserNotViewer() {
-      return !this.auth.isUserViewer
+      return !this.isUserViewer
     },
 
     transactionTypeId() {
       return this.$lodash.get(this, 'transactionType.id')
     },
-
-    filter() {
-      return this.$store.state.accountFilter
-    }
   },
 
   methods: {
@@ -168,7 +175,7 @@ export default {
     updateCategories() {
       const { get } = this.$lodash
       const { transactionTypeId, account = {} } = this
-      const { sinceDate, untilDate, type: filterType } = this.filter
+      const { sinceDate, untilDate, filterType } = this
       const { id: filterTypeId } = filterType
       const hasRangePeriod = sinceDate && untilDate
       const isDateInRange = this.$lodash.isDateInRange(untilDate, sinceDate)
@@ -211,8 +218,8 @@ export default {
         this.setStatistics(categories)
         this.setPeriod(categories)
       } else {
-        this.sinceDate = undefined
-        this.untilDate = undefined
+        this.shownTransactionsSinceDate = undefined
+        this.shownTransactionsUntilDate = undefined
         this.statistics = []
       }
 
@@ -222,10 +229,8 @@ export default {
 
     setPeriod(categories) {
       const { last, get } = this.$lodash
-      const untilDate = get(categories, '0.date')
-      const sinceDate = get(last(categories), 'date')
-      this.sinceDate = sinceDate
-      this.untilDate = untilDate
+      this.shownTransactionsSinceDate = get(last(categories), 'date')
+      this.shownTransactionsUntilDate = get(categories, '0.date')
     },
 
     setStatistics(categories) {
@@ -293,6 +298,10 @@ export default {
   align-items: flex-end;
   color: $white;
 
+  @media (--until-tablet) {
+    flex-wrap: wrap;
+  }
+
   $filledSize: (1em / 24 * 10);
   &__title {
     padding: $filledSize $filledSize 9px;
@@ -304,27 +313,58 @@ export default {
     @media (--from-tablet) {
       width: 360px;
     }
+
+    @media (--until-tablet) {
+      width: 100%;
+    }
   }
 }
 
 .account-transactions-header {
   display: flex;
 
+  @media (--until-tablet) {
+    flex-wrap: wrap;
+  }
+
   > * {
-    width: 20%;
     margin: 0;
     padding: 0 .75em 1em;
     color: #979797;
     font-weight: bold;
-
     border: 1px solid $darkGray;
     border-top: 0;
     border-left: 0;
 
+    @media (--from-tablet) {
+      width: 20%;
+      padding: 0 .75em 1em;
+    }
+
+    @media (--until-tablet) {
+      min-width: 50%;
+      padding: .75em .75em .85em;
+    }
+
     &:last-child {
-      border-right: 0;
+      
+      @media (--until-tablet) {
+        width: 100%;
+        padding: .75em .75em .85em;
+      }
     }
   }
+}
+
+.head_note, .head_category {
+  @media (--until-tablet) {
+    border-right: 0;
+  }
+} 
+
+.head_statistics {
+  border-right: 0;
+  text-align: center;
 }
 
 .account-container {
@@ -332,10 +372,21 @@ export default {
 }
 
 .transactions-actions {
+  padding: .7em  0;
+  margin-bottom: 0;
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  margin-bottom: .7em;
+  background-color: white;
+
+
+  @media (--until-tablet) {
+    width: 100%;
+    padding: 1em;
+    margin: 1em auto;
+    order: 4;
+    box-shadow: 0 0 10px rgba(#333, .5);
+  }
 
   @media (--from-tablet) {
     width: 360px;
@@ -344,5 +395,9 @@ export default {
   button {
     margin-bottom: .5em;
   }
+}
+
+.account-transactions-list {
+  margin-bottom: 0;
 }
 </style>

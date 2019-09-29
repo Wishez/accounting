@@ -25,6 +25,7 @@
 </template>
 
 <script>
+import { mapState } from 'vuex'
 import { createAccountGql, updateAccountGql } from '~/constants/gql'
 import { popupsNames } from '~/constants/popups'
 import ColorField from './ColorField'
@@ -38,9 +39,8 @@ export default {
     account() {
       return this.$lodash.get(this.$store.state.popups.payload, popupsNames.ACCOUNT, {})
     },
-    isLoggedIn() {
-      return this.$store.state.auth.isLoggedIn
-    },
+
+    ...mapState('auth', ['isLoggedIn']),
   },
   data() {
     return {

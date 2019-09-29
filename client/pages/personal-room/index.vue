@@ -1,5 +1,5 @@
 <template>
-  <section v-if="authState.isLoggedIn" class="container personal-room">
+  <section v-if="isLoggedIn" class="container personal-room">
     <h1>Профиль</h1>
 
     <form>
@@ -13,6 +13,7 @@
 </template>
 
 <script>
+import { mapState } from 'vuex'
 import { RolesMap } from '~/constants/user'
 import { UserForm } from '~/components'
 import { updateProfileGql } from '~/constants/gql'
@@ -22,19 +23,10 @@ export default {
   components: {
     UserForm,
   },
-  filters: {},
   data: () => ({
     RolesMap
   }),
-  computed: {
-    authState() {
-      return this.$store.state.auth
-    },
-
-    user() {
-      return this.authState.user
-    },
-  },
+  computed: mapState('auth', ['user', 'isLoggedIn']),
 }
 </script>
 

@@ -23,14 +23,13 @@
 </template>
 
 <script>
+import { mapState } from 'vuex'
 import { authenticateUserGql } from '~/constants/gql'
 import { fetechUserProfile } from '~/constants/user'
 
 export default {
   computed: {
-    isLoggedIn() {
-      return this.$store.state.auth.isLoggedIn
-    }
+    ...mapState('auth', ['isLoggedIn']),
   },
   data: () => ({
     credentials: {
