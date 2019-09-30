@@ -23,7 +23,8 @@
     "lodash": "^4.17.14",
     "morgan": "^1.9.1",
     "nodemon": "^1.19.1",
-    "pg-promise": "^8.7.3"
+    "pg-promise": "^8.7.3",
+    "xlsx": "^0.15.1"
   },
   "devDependencies": {
     "apollo-link": "^1.2.12",
