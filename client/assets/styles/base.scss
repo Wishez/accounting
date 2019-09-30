@@ -391,6 +391,10 @@ img {
 .popupLitter form {
   margin: 0;
 
+  @media (--until-tablet) {
+    min-width: 100%;
+  }
+
   > * {
     @media (--until-tablet) {
       width: 100%;
