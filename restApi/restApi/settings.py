@@ -27,7 +27,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', cast=bool)
+DEBUG = config('IS_DEBUG', cast=bool)
 IS_PRODUCTION = config('IS_PRODUCTION', cast=bool)
 
 ALLOWED_HOSTS = config(
@@ -96,16 +96,18 @@ WSGI_APPLICATION = 'restApi.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
+databaseConfig = {
+    'ENGINE': 'django.db.backends.postgresql',
+    'NAME': 'postgres',
+    'USER': 'postgres',
+    'HOST': 'database',
+    'PORT': 5432,
+}
+if config('IS_TEST', cast=bool):
+    databaseConfig = dj_database_url.parse(config('DATABASE_URL'))
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'postgres',
-        'USER': 'postgres',
-        'HOST': 'database',
-        'PORT': 5432,
-    },
-    # 'default': dj_database_url.parse(config('DATABASE_URL')),
+    'default': databaseConfig,
 }
 
 

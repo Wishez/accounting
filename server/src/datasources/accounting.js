@@ -1,6 +1,7 @@
 const { RESTDataSource } = require('apollo-datasource-rest');
 const env = require('../env')
 const isArray = require('lodash/isArray')
+const pick = require('lodash/pick')
 
 const getTime = (item, dateFieldName) => new Date(item[dateFieldName]).getTime()
 const sortByDate = (items, dateFieldName) => {
@@ -50,42 +51,30 @@ class AccountingAPI extends RESTDataSource {
 
     const { 
       uuid,
-      category,
-      branch,
-      profit,
-      consumption,
-      balance,
-      date,
-      order,
-      note,
       transactionType,
       is_deleted = false,
     } = transaction
     return {
       id: uuid,
       type: AccountingAPI.reduceTransactionType(transactionType),
-      category,
-      branch,
-      note,
-      profit,
-      balance,
-      date,
-      order,
-      consumption,
       isDeleted: is_deleted,
+      ...pick(transaction, [
+        'transaction_object', 'segment', 'category', 'note', 'profit',
+        'balance', 'date', 'order', 'consumption',
+      ]),
     }
   }
 
   static reduceTransactionType(transactionType) {
     if (!transactionType.uuid) return null
 
-    const { color, name, uuid, slug, is_deleted = false } = transactionType
+    const { uuid, is_deleted = false } = transactionType
     return {
       id: uuid,
-      color,
-      name,
-      slug,
       isDeleted: is_deleted,
+      ...pick(transactionType, [
+        'name', 'color', 'slug',
+      ]),
     }
   }
 
@@ -195,56 +184,26 @@ class AccountingAPI extends RESTDataSource {
     const {
       accountId,
       transactionTypeId,
-      balance,
-      profit,
-      consumption,
-      order,
-      branch,
-      note,
-      date,
-      category,
-      slug,
     } = payload
     const result = await this.post('transactions/', {
       accountId,
       transactionTypeId,
       payload: {
-        balance,
-        profit,
-        consumption,
-        order,
-        branch,
-        note,
-        date,
-        category,
-        slug,
+        ...pick(payload, [ 
+          'balance', 'profit', 'consumption', 'order', 'note', 'date', 'category', 'slug',
+          'transaction_object', 'segment',
+        ]),
       },
     })
     return AccountingAPI.getItemResponse(result, AccountingAPI.reduceTransaction)
   }
   
   async updateTransaction(uuid, payload) {
-    const {
-      slug,
-      balance,
-      profit,
-      consumption,
-      order,
-      branch,
-      note,
-      date,
-      category,
-    } = payload
     const result = await this.put(`transactions/${uuid}/`, {
-      balance,
-      profit,
-      consumption,
-      order,
-      branch,
-      note,
-      date,
-      category,
-      slug,
+      ...pick(payload, [ 
+        'balance', 'profit', 'consumption', 'order', 'note', 'date', 'category', 'slug',
+        'transaction_object', 'segment',
+,      ]),
     })
     return AccountingAPI.getItemResponse(result, AccountingAPI.reduceTransaction)
   }
@@ -260,12 +219,11 @@ class AccountingAPI extends RESTDataSource {
   }
 
   async createTransactionType(payload) {
-    const { name, color, slug } = payload
     const result = await this.post(`transactions/types/`, {
       payload: {
-        name,
-        color,
-        slug,
+        ...pick(payload, [ 
+          'name', 'color', 'slug',
+  ,      ]),
       }
     })
     return AccountingAPI.getItemResponse(result, AccountingAPI.reduceTransactionType)
@@ -274,9 +232,9 @@ class AccountingAPI extends RESTDataSource {
   async updateTransactionType(uuid, payload) {
     const { name, color, slug } = payload
     const result = await this.put(`transactions/types/${uuid}/`, {
-      name,
-      color,
-      slug,
+      ...pick(payload, [ 
+        'name', 'color', 'slug',
+,      ]),
     })
     return AccountingAPI.getItemResponse(result, AccountingAPI.reduceTransactionType)
   }
@@ -303,7 +261,7 @@ class AccountingAPI extends RESTDataSource {
 
   static reduceProfile(profile) {
     if (!profile.uuid) return null
-    const { uuid, name, email, role, date_joined, is_deleted = false } = profile
+    const { uuid, name, date_joined, is_deleted = false } = profile
     const [firstName, middleName, lastName] = name.split(' ')
   
     const hasNotMiddleName = !lastName
@@ -313,41 +271,28 @@ class AccountingAPI extends RESTDataSource {
       lastName: hasNotMiddleName ? middleName : lastName,
       dateJoined: date_joined,
       isDeleted: is_deleted,
-      email,
-      role,
+      ...pick(payload, [ 
+        'email', 'role',
+,      ]),
     }
   }
 
   async createProfile(payload) {
-    const {
-      email,
-      password,
-      name,
-      role,
-    } = payload
     const result = await this.post('profile/', {
       payload: {
-        email,
-        password,
-        name,
-        role,
+        ...pick(payload, [ 
+          'email', 'password', 'name', 'role',
+  ,      ]),
       },
     })
     return AccountingAPI.getItemResponse(result, AccountingAPI.reduceProfile)
   }
 
   async updateProfile(uuid, payload) {
-    const {
-      email,
-      password,
-      name,
-      role,
-    } = payload
     const result = await this.put(`profile/${uuid}/`, {
-      email,
-      role,
-      password,
-      name,
+      ...pick(payload, [ 
+        'email', 'password', 'name', 'role',
+,      ]),
     })
     return AccountingAPI.getItemResponse(result, AccountingAPI.reduceProfile)
   }

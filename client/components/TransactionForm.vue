@@ -32,21 +32,30 @@
       v-model="payload.category"
       name="category"
       id="category"
-      placeholder="АА"
+      placeholder="Долг"
       labelText="Категория"
+      :isRequired="false"
     />
     <base-field
-      v-model="payload.branch"
-      name="branch"
-      id="branch"
-      placeholder="Иваново"
-      labelText="Филиал"
+      v-model="payload.segment"
+      name="segment"
+      id="segment"
+      placeholder="05 Пит"
+      labelText="Сегмент категории"
+      :isRequired="false"
+    />
+    <base-field
+      v-model="payload.transaction_object"
+      name="transaction_object"
+      id="transaction_object"
+      placeholder="Иван Иванов/Сбербанк"
+      labelText="Объект"
       :isRequired="false"
     />
     <base-field
       name="note"
       id="note"
-      placeholder="Выплата Ивану Иванову"
+      placeholder="Долг Ивана Иванованова"
       labelText="Заметка"
       v-model="payload.note"
       :isRequired="false"
@@ -110,7 +119,8 @@ export default {
     payload() {
       const {
         category = '',
-        branch = '',
+        transaction_object = '',
+        segment = '',
         note = '',
         profit = 0.00,
         consumption = 0.00,
@@ -122,7 +132,7 @@ export default {
       } = this.transaction
       return {
         category,
-        branch,
+        segment,
         note,
         profit,
         consumption,
