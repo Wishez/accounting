@@ -36,8 +36,9 @@ const schemaString = gql`
     type Transaction {
         id: ID!
         type: TransactionType!
-        category: String!
-        branch: String
+        category: String
+        transaction_object: String
+        segment: String
         note: String
         consumption: Float!
         profit: Float!
@@ -113,8 +114,9 @@ const schemaString = gql`
     type TransactionDetail {
         id: ID!
         type: TransactionType!
-        category: String!
-        branch: String
+        category: String
+        transaction_object: String
+        segment: String
         note: String
         consumption: Float!
         profit: Float!
@@ -180,10 +182,11 @@ const schemaString = gql`
         profit: Float,
         consumption: Float,
         order: Int
-        branch: String
+        category: String
+        transaction_object: String
+        segment: String
         note: String
         date: String
-        category: String
     }
 
     input UpdateTransactionPayload {
@@ -192,10 +195,11 @@ const schemaString = gql`
         profit: Float
         consumption: Float
         order: Int
-        branch: String
+        category: String
+        transaction_object: String
+        segment: String
         note: String
         date: String
-        category: String
     }
 
     type DeleteItemResponse {

@@ -32,7 +32,8 @@
           <div class="account-transactions-header">
               <span>Тип транзакции</span>
               <span class="head head_category">Категория</span>
-              <span class="head head_branch" >Филиал</span>
+              <span class="head head_segment" >Сегмент категории</span>
+              <span class="head head_transaction-object" >Объект</span>
               <span class="head head_note">Примичание</span>
               <span class="head head_statistics">Статистика</span>
           </div>
@@ -42,7 +43,8 @@
               <base-button class="account-transaction" :action="editTransaction(transaction)" unstyled>
                 <h3>{{transaction.type.name}}</h3>
                 <span>{{transaction.category}}</span>
-                <span>{{transaction.branch}}</span>
+                <span>{{transaction.segment}}</span>
+                <span>{{transaction.transaction_object}}</span>
                 <span>{{transaction.note}}</span>
                 <span><base-statistics :transactions="[transaction]" /></span>
               </base-button>
@@ -333,38 +335,40 @@ export default {
     color: #979797;
     font-weight: bold;
     border: 1px solid $darkGray;
-    border-top: 0;
-    border-left: 0;
+    border-top-width: 0;
+    border-left-width: 0;
 
     @media (--from-tablet) {
-      width: 20%;
+      width: (100% / 6);
       padding: 0 .75em 1em;
     }
 
     @media (--until-tablet) {
-      min-width: 50%;
+      max-width: 50%;
+      width: 100%;
       padding: .75em .75em .85em;
     }
 
-    &:last-child {
-      
+    &:first-child, &:nth-child(3), &:nth-child(5) {
+
       @media (--until-tablet) {
-        width: 100%;
-        padding: .75em .75em .85em;
+        border-left-width: 1px;
+      }
+    }
+
+    &:first-child, &:nth-child(2) {
+
+      @media (--until-tablet) {
+        border-top-width: 1px;
+      }
+    }
+
+    &:last-child {
+      @media (--from-tablet) {
+        border-right-width: 0;
       }
     }
   }
-}
-
-.head_note, .head_category {
-  @media (--until-tablet) {
-    border-right: 0;
-  }
-} 
-
-.head_statistics {
-  border-right: 0;
-  text-align: center;
 }
 
 .account-container {

@@ -108,8 +108,9 @@ class Transaction(TimeStampedModel):
 		blank=True,
 		on_delete='SET_NULL'
 	)
-	category = models.CharField(_('Категория'), max_length=50)
-	branch = models.CharField(_('Филиал'), max_length=50, blank=True, null=True)
+	category = models.CharField(_('Категория'), max_length=50, blank=True, null=True)
+	segment = models.CharField(_('Категория'), max_length=50, blank=True, null=True)
+	transaction_object = models.CharField(_('Филиал'), max_length=50, blank=True, null=True)
 	note = models.CharField(_('Примечание'), max_length=400, blank=True, null=True)
 	consumption = models.DecimalField(
 		_('Расход'),
