@@ -196,7 +196,8 @@ const transactionTile = gql`
       slug
     }
     category
-    branch
+    transaction_object
+    segment
     note
     consumption
     profit

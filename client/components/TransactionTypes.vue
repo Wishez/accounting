@@ -54,11 +54,9 @@ export default {
     },
   },
 
-  computed: {
-    ...mapState('auth', [
-      'isUserViewer'
-    ]),
-  },
+  computed: mapState('auth', [
+    'isUserViewer'
+  ]),
 
   data: () => ({
     transactionTypePopupName,

@@ -70,7 +70,8 @@ class AccountTransactionSerializer(serializers.ModelSerializer):
             'uuid',
             'transactionType',
             'category',
-            'branch',
+            'segment',
+            'transaction_object',
             'note',
             'consumption',
             'profit',
@@ -129,7 +130,8 @@ class TransactionDetailSerializer(serializers.ModelSerializer):
             'uuid',
             'transactionType',
             'category',
-            'branch',
+            'segment',
+            'transaction_object',
             'note',
             'consumption',
             'profit',
@@ -178,11 +180,10 @@ class TransactionDetailSerializer(serializers.ModelSerializer):
         transaction.update(**validated_data)
 
         date = validated_data.get('date')
-        print(date, instance.date)
+
         if date != instance.date:
             transactionType = transactionType or instance.transactionType
             order = len(Transaction.objects.filter(date=validated_data.get('date'), transactionType=transactionType))
-            print('order', order)
             transaction.update(order=order)
         
 

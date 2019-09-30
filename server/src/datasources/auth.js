@@ -4,7 +4,6 @@ const get = require('lodash/get')
 const env = require('../env')
 const axios = require('axios')
 
-console.log(env)
 const getParsedToken = (token) => jwt.decode(token, {complete: true})
 class AuthAPI extends RESTDataSource {
     constructor() {
@@ -33,13 +32,13 @@ class AuthAPI extends RESTDataSource {
     }
 }
 
-
-const verifyToken = async (token) => await axios.post(env.AUTH_API_URL + 'verify/', { token })
+const verifyUrl = `${env.TEST_AUTH_API_URL || env.AUTH_API_URL}verify/`
+const verifyToken = async (token) => await axios.post(verifyUrl, { token })
     .then((response) => ({
         detail: response.data.detail,
         email: get(getParsedToken(token), 'payload.email'),
     }))
-
+    .catch((error) => console.error(error.message))
 
 module.exports = {
     api: AuthAPI,
