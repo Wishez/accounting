@@ -1,6 +1,6 @@
 # -*- encoding: utf-8 -*-
 from django.views.decorators.csrf import csrf_exempt
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.parsers import JSONParser
@@ -83,14 +83,17 @@ def make_serializer_list(request, Model, Serializer, PostSerializer=None):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 @api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
 def account_list(request):
     return make_serializer_list(request, Account, AccountSerializer)
 
 @api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
 def transaction_type_list(request):
     return make_serializer_list(request, TransactionType, TransactionTypeSerializer)
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def profile_list(request):
     if request.method == 'GET':
         users = User.objects.all()
@@ -153,25 +156,31 @@ def make_serializer_detail_with_uuid(request, Model, Serializer, uuid):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 @api_view(['PUT', 'PATCH'])
+@permission_classes([IsAuthenticated])
 def account_detail(request, uuid):
     return make_serializer_detail_with_uuid(request, Account, AccountSerializer, uuid)
 
 @api_view(['GET', 'PUT', 'PATCH'])
+@permission_classes([IsAuthenticated])
 def transaction_detail(request, uuid):
     return make_serializer_detail_with_uuid(request, Transaction, TransactionDetailSerializer, uuid)
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def get_account_detail(request, slug):
     return make_serializer_detail_with_slug(request, Account, AccountSerializer, slug)
 
 @api_view(['PUT', 'PATCH'])
+@permission_classes([IsAuthenticated])
 def profile_detail(request, uuid):
     return make_serializer_detail_with_uuid(request, User, UserSerializer, uuid)
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def get_transaction_type_detail(request, slug):
     return make_serializer_detail_with_slug(request, TransactionType, TransactionTypeSerializer, slug)
 
 @api_view(['PUT', 'PATCH'])
+@permission_classes([IsAuthenticated])
 def transaction_type_detail(request, uuid):
     return make_serializer_detail_with_uuid(request, TransactionType, TransactionTypeSerializer, uuid)
