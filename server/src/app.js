@@ -10,7 +10,7 @@ const resolvers = require('./resolvers')
 const context = require('./context')
 const schemaString = require('./schema')
 
-const exelParser = require('./api/exelParser')
+const exelParser = require('./api/exelParser/index')
 
 const AccountingAPI = require('./datasources/accounting')
 const AuthAPI = require('./datasources/auth').api
