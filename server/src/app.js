@@ -5,12 +5,11 @@ const bodyParser = require('body-parser')
 const cors = require('cors')
 const path = require('path')
 const cookieParser = require('cookie-parser')
+const fileUpload = require('express-fileupload')
 
 const resolvers = require('./resolvers')
 const context = require('./context')
 const schemaString = require('./schema')
-
-const exelParser = require('./api/exelParser/index')
 
 const AccountingAPI = require('./datasources/accounting')
 const AuthAPI = require('./datasources/auth').api
@@ -37,9 +36,16 @@ app.use(cors())
 app.use(cookieParser())
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: false }))
+  app.use(fileUpload({
+    limits: { fileSize: 50 * 1024 * 1024 },
+  }))
+
+const excelParserRoutes = require('./routes/excelParser')
+app.use('/api/excel', excelParserRoutes)
 
 const graphqlPath = '/api' 
 server.applyMiddleware({ app, path: graphqlPath })
+
 
 const port = env.APP_PORT || 4002
 const host = env.APP_HOST

@@ -1,9 +1,9 @@
-import { graphqlApiAddress } from '../config'
+import { apiUrl } from '../config'
 
 export default function() {
-  let httpEndpoint = process.env.TEST_APOLLO_SERVER_HTTP || process.env.APOLLO_SERVER_HTTP || graphqlApiAddress
+  let httpEndpoint = process.env.TEST_APOLLO_SERVER_HTTP || process.env.APOLLO_SERVER_HTTP || apiUrl
   if (process.client) {
-    httpEndpoint = graphqlApiAddress
+    httpEndpoint = apiUrl
   }
 
   return {

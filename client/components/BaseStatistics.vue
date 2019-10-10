@@ -4,6 +4,7 @@
     'statistics-holder_litter': hasLitter, 
     'statistics-holder_form': !isReadOnly,
     'statistics-holder_fadeOut': isFadeOut,
+    [className]: className, 
   }">
     <div class="statistics-container">
       <label for="profit-statistics">Приход:</label>
@@ -29,7 +30,7 @@
     </div>
 
     <div class="statistics-container">
-      <label for="balance-statistics">{{this.accountBalance ? 'Баланс:' : 'Сальдо:'}}</label>
+      <label for="balance-statistics">{{isBalance || accountBalance ? 'Баланс:' : 'Сальдо:'}}</label>
       <input
         v-model="balance"
         v-money="money"
@@ -78,6 +79,7 @@ export default {
       type: Array,
       required: true,
     },
+    className: String,
     hasLitter: Boolean,
     isReadOnly: {
       type: Boolean,
@@ -85,6 +87,7 @@ export default {
     },
     isFadeOut: Boolean,
     accountBalance: [String, Number],
+    isBalance: Boolean,
   },
   data: () => ({
     money: moneyConfig,
@@ -177,6 +180,8 @@ p {
 
   &_litter {
     padding: 1em;
+    width: calc(33.33% - 18px);
+    margin-left: 18px;
     background-color: $darkGray;
     color: $white;
     z-index: 3;

@@ -54,11 +54,12 @@ export default {
     display: inline-block;
 
     &_loader {
-      width: calc(100% + 1em);
-      height: calc(100% + 1em);
+      padding-bottom: 1.25em;
+      width: 100%;
+      height: 100%;
       position: absolute;
-      top: -.5em;
-      left: -.5em;
+      top: 0;
+      left: 0;
       display: flex;
       align-items: center;
       justify-content: center;
