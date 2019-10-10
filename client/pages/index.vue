@@ -30,7 +30,9 @@
     
       <ul v-if="$lodash.get(accounts, 'length', 0)" class="accounts">
         <li
-          v-for="({ id, name, transactions, slug, color }, index) in accounts.slice(0, pageNumber).filter(({ name }) => name.indexOf(searchName) !== -1)"
+          v-for="({ id, name, transactions, slug, color }, index) in accounts
+            .slice(0, pageNumber)
+            .filter(({ name }) => name.indexOf(searchName) !== -1)"
           :key="index"
           :style="`border-color:${color};`"
           class="accountTile"
@@ -62,7 +64,7 @@
           </div>
         </li>
       </ul>
-      <p v-else-if="!$apollo.queries.accounts.loading" class="empty-items">Нет {{isDeletedShown ? 'удалённых' : 'доступных'}} счетов</p>
+      <p v-else-if="!$apollo.queries.accounts.loading" class="litter">Нет {{isDeletedShown ? 'удалённых' : 'доступных'}} счетов</p>
 
       <div ref="pagination" class="pagination litter"></div>
     </section>
