@@ -40,3 +40,7 @@ const cells = {
     type: String,
   },
 }
+
+module.exports = {
+  cells,
+}
