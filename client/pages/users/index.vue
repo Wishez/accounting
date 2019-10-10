@@ -17,11 +17,13 @@
             :icon="['fas', 'search']"
           />
         </div>
+
+        <loader v-if="$apollo.queries.profiles.loading || isSearchLoading" />
       </div>
-      <loader v-if="isSearchLoading" />
+
       <ul v-if="$lodash.get(profiles, 'length', 0)" class="users-list">
         <li
-          v-for="({ id, email, role, dateJoined }, index) in profiles.filter((profile) => searchName ? payloads[profile.id].name.indexOf(searchName) !== -1 : true)"
+          v-for="({ id, email, role, dateJoined }, index) in profiles.slice(0, pageNumber).filter((profile) => searchName ? payloads[profile.id].name.indexOf(searchName) !== -1 : true)"
           :key="index + updateCount"
           class="user-item"
         >
@@ -67,7 +69,8 @@
           </div>
         </li>
       </ul>
-      <loader v-else-if="$apollo.queries.profiles.loading" />
+
+      <div ref="pagination" class="pagination litter"></div>
     </section>
 
   <modal-container :isShown="$store.state.popups[userPopupName]" :onClose="refetchProfieles">
@@ -87,6 +90,7 @@ import { popupsNames } from '~/constants/popups'
 import { Roles, RolesMap, roles } from '~/constants/user'
 import { ModalContainer, UserForm } from '~/components'
 import { pluck, debounceTime, map, of } from 'rxjs/operators'
+import { setPagination } from '~/constants/pagination'
 
 const { USER: userPopupName } = popupsNames
 
@@ -122,9 +126,14 @@ export default {
     nameFilterValue: '',
     isDeletedShown: false,
     isSearchLoading: false,
+    pageNumber: 5,
   }),
 
   computed: mapState('auth', ['user', 'isUserAdmin']),
+
+  mounted() {
+    setPagination.call(this, 5)
+  },
 
   methods: {
     validateSelection(userId, selection) {
@@ -196,6 +205,7 @@ export default {
     },
 
     refetchProfieles() {
+      this.pageNumber = 5
       this.$apollo.queries.profiles.refetch({
         isDeletedShown: this.isDeletedShown,
       })
@@ -242,6 +252,7 @@ export default {
         debounceTime(500),
         pluck('newValue'),
         map(value => {
+          this.pageNumber = 5
           this.searchName = value
           this.isSearchLoading = false
         })

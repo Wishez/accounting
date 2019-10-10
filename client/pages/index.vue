@@ -24,11 +24,13 @@
           placeholder="FF/11"
           :icon="['fas', 'search']"
         />
+
+        <loader v-if="$apollo.queries.accounts.loading" />
       </div>
     
       <ul v-if="$lodash.get(accounts, 'length', 0)" class="accounts">
         <li
-          v-for="({ id, name, transactions, slug, color }, index) in accounts.filter(({ name }) => name.indexOf(searchName) !== -1)"
+          v-for="({ id, name, transactions, slug, color }, index) in accounts.slice(0, pageNumber).filter(({ name }) => name.indexOf(searchName) !== -1)"
           :key="index"
           :style="`border-color:${color};`"
           class="accountTile"
@@ -38,7 +40,7 @@
           </h2>
 
           <h3>Транзакции</h3> 
-          <ul v-if="$lodash.unionBy(transactions, 'type.id').length" class="actions">
+          <ul v-if="$lodash.unionBy(transactions, 'type.id').length" class="zero-margin">
             <li v-for="({ type }, index) in $lodash.unionBy(transactions, 'type.id')" :key="index" class="action-button">
               <n-link :to="`/account/${slug}?type=${type.slug}`" class="transactionType">
                   {{type.name}}
@@ -48,7 +50,7 @@
           <p v-else>Нет транзакций</p>
 
           <h3 class="statisticsHeading">Статистика</h3>
-          <base-statistics :transactions="transactions" />
+          <base-statistics :transactions="transactions" isBalance/>
 
           <div v-if="isUserNotViewer" class="formButtonsContainer formButtonsContainer_topOffset">
             <base-button :action="editAccount({ id, name, slug })" class-name="action-button" unstyled>
@@ -60,8 +62,9 @@
           </div>
         </li>
       </ul>
-      <loader v-else-if="this.$apollo.queries.accounts.loading" />
-      <p v-else class="empty-items">Нет {{isDeletedShown ? 'удалённых' : 'доступных'}} счетов</p>
+      <p v-else-if="!$apollo.queries.accounts.loading" class="empty-items">Нет {{isDeletedShown ? 'удалённых' : 'доступных'}} счетов</p>
+
+      <div ref="pagination" class="pagination litter"></div>
     </section>
 
     <modal-container :isShown="$store.state.popups[accountPopupName]" :onClose="refetchUpdatedAccounts">
@@ -75,6 +78,7 @@ import { mapState } from 'vuex'
 import { ModalContainer, AccountForm, TransactionTypes } from '~/components'
 import { popupsNames } from '~/constants/popups'
 import { getAccountsRequestGql, deleteAccountGql } from '~/constants/gql'
+import { setPagination } from '~/constants/pagination'
 import { pluck, debounceTime, map, of } from 'rxjs/operators'
 
 const accountPopupName = popupsNames.ACCOUNT
@@ -95,7 +99,9 @@ export default {
 
       update({ accounts = {} }) {
         return accounts.isSuccess ? accounts.data : []
-      }
+      },
+
+      prefetch: false,
     }
   },
 
@@ -115,7 +121,12 @@ export default {
       searchName: '',
       nameFilterValue: '',
       isSearchLoading: false,
+      pageNumber: 5,
     }
+  },
+
+  mounted() {
+    setPagination.call(this, 5)
   },
 
   methods: {
@@ -126,6 +137,7 @@ export default {
     },
 
     refetchUpdatedAccounts() {
+      this.pageNumber = 5
       this.isDeletedShown = false
       this.refetchAccounts()
     },
@@ -175,6 +187,7 @@ export default {
         debounceTime(500),
         pluck('newValue'),
         map(value => {
+          this.pageNumber = 5
           this.searchName = value
           this.isSearchLoading = false
         })
@@ -205,27 +218,26 @@ export default {
   flex-basis: calc(33.3% - 20px);
   flex-grow: 1;
   padding: 1em 1em 1.5em;
+  flex-direction: column;
+  display: inline-flex;
+  margin: 0 10px 1em;
   box-shadow: 0 0 10px rgba(#333, .5);
   border: 3px dashed;
-  margin: 0 10px 1em;
   background-color: #fff;
 
   @media (--until-tablet) {
     flex-basis: 100%;
   }
-
 }
 
 .statisticsHeading {
   margin-top: 1em;
 }
-.accountsTiles {
-  min-height: 438px;
-}
 
 .accounts-actions {
   display: flex;
   align-items: flex-end;
+  position: relative;
 }
 </style>
 

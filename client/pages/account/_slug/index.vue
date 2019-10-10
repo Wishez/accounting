@@ -4,7 +4,7 @@
 
     <section class="account-container">
       <div class="accountHeader">
-        <h1 class="accountHeader__title">
+        <h1 class="accountHeader__title litter">
           {{$lodash.get(account, 'name')}}
         
           <div v-if="shownTransactionsSinceDate && shownTransactionsUntilDate" class="transactions-period">
@@ -13,20 +13,30 @@
           </div>
         </h1>
 
-        <div v-if="isUserNotViewer" class="actions transactions-actions">
+        <div v-if="isUserNotViewer" class="actions_near transactions-actions litter">
           <base-button :action="openTransactionPopup" class="action-button" unstyled>Создать транзакцию</base-button>
           <base-button :action="toggleTransactions" class="action-button" unstyled>
             {{isDeletedTransactionsShown ? 'Действующие' : 'Удалённые'}} транзакиции
           </base-button>
         </div>
 
-        <base-statistics :isFadeOut="isDeletedTransactionsShown" hasLitter :key="updateCount" :transactions="this.statistics" :accountBalance="accountBalance" />
+        <base-statistics
+          className="litter"
+          :isFadeOut="isDeletedTransactionsShown"
+          hasLitter
+          :key="updateCount"
+          :transactions="this.statistics"
+          :accountBalance="accountBalance"
+        />
       </div>
 
-      <account-filter :accountCategories="accountCategories" @change="updateCategories" />
+      <div class="filter-holder">
+        <account-filter :accountCategories="accountCategories" @change="updateCategories" />
+        <loader v-if="isUpdating || $apollo.queries.account.loading" />
+      </div>
 
       <ul v-if="categories.length" class="account-transactions-categories">
-        <li v-for="({ date, name, transactions }, index) in categories" :key="index + updateCount" class="account-transactions-category litter">
+        <li v-for="({ date, name, transactions }, index) in categories.slice(0, pageNumber)" :key="index + updateCount" class="account-transactions-category litter">
           <h2>{{date | formatDate('DD MMMM YYYY')}}</h2>
 
           <div class="account-transactions-header">
@@ -45,16 +55,15 @@
                 <span>{{transaction.category}}</span>
                 <span>{{transaction.segment}}</span>
                 <span>{{transaction.transaction_object}}</span>
-                <span>{{transaction.note}}</span>
+                <span class="field field_note">{{transaction.note}}</span>
                 <span><base-statistics :transactions="[transaction]" /></span>
               </base-button>
             </li>
           </ul>
         </li>
       </ul>
-      <loader v-else-if="$apollo.queries.account.loading" />
 
-      <p v-if="!categories.length" class="litter">
+      <p v-if="!categories.length && !(isUpdating || $apollo.queries.account.loading)" class="litter">
         <span v-if="!untilDate && !sinceDate && !filterType.id">
           На счету нет транзакиций.
         </span>
@@ -75,6 +84,8 @@
       <p v-if="$apollo.queries.account.error || $apollo.queries.transactionType.error" class="error">
         {{errorMessage}}
       </p>
+
+      <div ref="pagination" class="pagination litter"></div>
     </section>
 
     <modal-container :onClose="refetchTransactions" :isShown="$store.state.popups[transactionPopupName]">
@@ -87,6 +98,7 @@
 import { mapState } from 'vuex'
 import { popupsNames } from '~/constants/popups'
 import { getAccountGql, getTransactionTypeGql } from '~/constants/gql'
+import { setPagination } from '~/constants/pagination'
 import { ModalContainer, TransactionForm, TransactionTypes, AccountFilter } from '~/components'
 import { pluck, map } from 'rxjs/operators'
 
@@ -106,7 +118,10 @@ export default {
 
       update({ account = {} }) {
         return account.isSuccess ? account.data : {}
-      } 
+      },
+
+      fetchPolicy: 'network-only',
+      prefetch: false,
     },
 
     transactionType: {
@@ -124,7 +139,7 @@ export default {
 
       skip() {
         return !this.$route.query.type
-      }
+      },
     },
   },
 
@@ -140,6 +155,7 @@ export default {
     errorMessage: '',
     isError: false,
     updateCount: 0,
+    isUpdating: false,
     categories: [],
     accountBalance: 0,
     statistics: [],
@@ -147,6 +163,7 @@ export default {
     isDeletedTransactionsShown: false,
     shownTransactionsSinceDate: undefined,
     shownTransactionsUntilDate: undefined,
+    pageNumber: 1,
   }),
 
   computed: {
@@ -175,58 +192,64 @@ export default {
     },
   
     updateCategories() {
-      const { get } = this.$lodash
-      const { transactionTypeId, account = {} } = this
-      const { sinceDate, untilDate, filterType } = this
-      const { id: filterTypeId } = filterType
-      const hasRangePeriod = sinceDate && untilDate
-      const isDateInRange = this.$lodash.isDateInRange(untilDate, sinceDate)
-      const categories = Object.values(get(account, 'transactions', []).reduce((result, transaction) => {
-        const { category, type, date } = transaction
-        const typeId = type.id
-        if ((filterTypeId && typeId !== filterTypeId) || !isDateInRange(date)) return result
+      this.isUpdating = true
+      this.pageNumber = 1
 
-        const transactionsMemorized = get(result, `${date}.transactions`, []) 
-        return {
-          ...result,
-          [date]: {
-            typeId,
-            date,
-            transactions: [
-              ...transactionsMemorized,
-              transaction,
-            ],
-          },
-        }
-      }, {}))
+      setTimeout(() => {
+        const { get } = this.$lodash
+        const { transactionTypeId, account = {} } = this
+        const { sinceDate, untilDate, filterType } = this
+        const { id: filterTypeId } = filterType
+        const hasRangePeriod = sinceDate && untilDate
+        const isDateInRange = this.$lodash.isDateInRange(untilDate, sinceDate)
+        const categories = Object.values(get(account, 'transactions', []).reduce((result, transaction) => {
+          const { category, type, date } = transaction
+          const typeId = type.id
+          if ((filterTypeId && typeId !== filterTypeId) || !isDateInRange(date)) return result
 
-      const { transactions = [] } = account
-      const lastTransaction = transactions[0]
-      
-      this.accountBalance = Number(get(lastTransaction, 'balance', 0)).toFixed(2)
-      this.accountCategories = Object.values(transactions.reduce((result, { type }) => {
-        const { name, id, slug } = type
-        return {
-          ...result,
-          [id]: {
-            name,
-            id,
-            slug,
+          const transactionsMemorized = get(result, `${date}.transactions`, []) 
+          return {
+            ...result,
+            [date]: {
+              typeId,
+              date,
+              transactions: [
+                ...transactionsMemorized,
+                transaction,
+              ],
+            },
           }
+        }, {}))
+
+        const { transactions = [] } = account
+        const lastTransaction = transactions[0]
+        
+        this.accountBalance = Number(get(lastTransaction, 'balance', 0)).toFixed(2)
+        this.accountCategories = Object.values(transactions.reduce((result, { type }) => {
+          const { name, id, slug } = type
+          return {
+            ...result,
+            [id]: {
+              name,
+              id,
+              slug,
+            }
+          }
+        }, {}))
+
+        if (categories.length) {
+          this.setStatistics(categories)
+          this.setPeriod(categories)
+        } else {
+          this.shownTransactionsSinceDate = undefined
+          this.shownTransactionsUntilDate = undefined
+          this.statistics = []
         }
-      }, {}))
 
-      if (categories.length) {
-        this.setStatistics(categories)
-        this.setPeriod(categories)
-      } else {
-        this.shownTransactionsSinceDate = undefined
-        this.shownTransactionsUntilDate = undefined
-        this.statistics = []
-      }
-
-      this.categories = categories
-      this.updateCount += 1
+        this.categories = categories
+        this.isUpdating = false
+        this.updateCount += 1
+      }, 1000)
     },
 
     setPeriod(categories) {
@@ -268,6 +291,7 @@ export default {
 
   mounted() {
     this.updateCategories()
+    setPagination.call(this)
   },
 
   subscriptions() {
@@ -307,13 +331,15 @@ export default {
   $filledSize: (1em / 24 * 10);
   &__title {
     padding: $filledSize $filledSize 9px;
-    margin: 0;
+    min-height: 66px;
+    margin-bottom: .4em;
     background-color: $darkGray;
     color: inherit;
     z-index: 2;
 
     @media (--from-tablet) {
-      width: 360px;
+      width: calc(33.33% - 18px);
+      margin-right: 18px;
     }
 
     @media (--until-tablet) {
@@ -332,6 +358,8 @@ export default {
   > * {
     margin: 0;
     padding: 0 .75em 1em;
+    display: flex;
+    align-items: flex-end;
     color: #979797;
     font-weight: bold;
     border: 1px solid $darkGray;
@@ -366,6 +394,7 @@ export default {
     &:last-child {
       @media (--from-tablet) {
         border-right-width: 0;
+        min-width: 220px;
       }
     }
   }
@@ -377,7 +406,6 @@ export default {
 
 .transactions-actions {
   padding: .7em  0;
-  margin-bottom: 0;
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
@@ -393,7 +421,7 @@ export default {
   }
 
   @media (--from-tablet) {
-    width: 360px;
+    width: 33.33%;
   }
 
   button {
@@ -403,5 +431,22 @@ export default {
 
 .account-transactions-list {
   margin-bottom: 0;
+}
+
+.filter-holder {
+  position: relative;
+  
+  .logo_loader {
+    z-index: 1000;
+  }
+}
+
+.field {
+
+  &_note {
+    font-size: 13px;
+    font-weight: bold;
+    text-align: left;
+  }
 }
 </style>

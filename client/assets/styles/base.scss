@@ -243,9 +243,15 @@ ul {
 
 
 .account-transaction-item  {
+  @media (--until-tablet) {
 
-  &:not(:last-child) {
-    border-bottom: 1px solid $darkGray;
+    &:not(:first-child) {
+      border-top: 1px solid $darkGray;
+    }
+  
+    &:not(:last-child) {    
+      margin-bottom: 1em;
+    }
   }
 }
 
@@ -262,7 +268,8 @@ ul {
   }
 
   &_topOffset {
-    margin-top: 2em;
+    padding-top: 2em;
+    margin-top: auto;
   }
 }
 
@@ -277,7 +284,7 @@ ul {
   }
 
   &:hover, &:focus {
-    background-color: rgba($red, .1);
+    background-color: rgba($red, .1) !important;
     outline: 0;
   }
 
@@ -315,6 +322,7 @@ ul {
       
       @media (--from-tablet) {
         border-right-width: 0;
+        min-width: 220px;
       }
     }
   }
@@ -374,12 +382,17 @@ img {
   }
 }
 
+.pagination {
+  opacity: 0;
+}
+
 .litter {
   padding: 1em 1em 1.4em;
   margin: 0;
   box-shadow: 0 0 10px rgba(#333, .5);
-  background-color: white;
+  position: relative;
   margin-bottom: 1em;
+  background-color: white;
 
   &_increased {
     @media (--from-tablet) {
@@ -501,4 +514,8 @@ img {
 
 .login-page .passwordInputContainer, .personal-room .user-note {
   margin-bottom: 0 !important;
+}
+
+.zero-margin {
+  margin: 0;
 }
