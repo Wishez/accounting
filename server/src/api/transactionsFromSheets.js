@@ -98,10 +98,22 @@ const getCreatedAccountId = async (accountName, items) => {
 const mapValues = require('lodash/mapValues')
 const omit = require('lodash/omit')
 const findLastKey = require('lodash/findLastKey')
+const last = require('lodash/last')
 const moment = require('moment')
 const { cells } = require('./constants/transactions')
 
-const createTransactionsFromSheet = async ({ sheet, accounts, transactionTypes, year }) => {
+const createTransactionsFromSheet = async (props) => {
+  const {
+    sheet,
+    accounts,
+    transactionTypes,
+    year,
+    notCreatedAccountsNames,
+    notCreatedTransactionsPayloads,
+    notCreatedTransactionsTypesNames,
+    createdTransactionsIds,
+    isLastSheet,
+  } = props
   const cellRegExp = /\w\d+/
   const lastCell = findLastKey(sheet, (value, key) => cellRegExp.test(key))
   
@@ -115,7 +127,12 @@ const createTransactionsFromSheet = async ({ sheet, accounts, transactionTypes, 
     const transactionTypeName = getCellFromRow('operation_type')
     const date = moment(`${getCellFromRow('date', 'w')} ${year}`, 'D MMM YYYY')
     const balance = getCellFromRow('balance')
-    if (!balance || !(profit || consumption) || !accountName || !transactionTypeName || !date.isValid()) continue;
+    if (!balance ||
+      !(profit || consumption) ||
+      (!accountName || accountName === '*' || typeof accountName === 'number') ||
+      (!transactionTypeName || transactionTypeName === '*') ||
+      !date.isValid()
+    ) continue;
 
     const payload = {
       ...mapValues(
@@ -135,15 +152,23 @@ const createTransactionsFromSheet = async ({ sheet, accounts, transactionTypes, 
     }
     const accountId = await getCreatedAccountId(accountName, accounts)
       .then(result => result)
+      .catch(() => notCreatedAccountsNames.push(accountName))
+    if (!accountId) continue;
+
     const transactionTypeId = await getCreatedTransactionTypeId(transactionTypeName, transactionTypes)
       .then(result => result)
+      .catch(() => notCreatedTransactionsTypesNames.push(transactionTypeName))
+      if (!transactionTypeId) continue;
+
     const transactionId = await getCreatedTransactionId(accountId, transactionTypeId, payload)
       .then(result => result)
+      .catch(() => notCreatedTransactionsPayloads.push(payload))
+    if (!transactionId) continue;
 
-    createdTransactions.push(transactionId)
+    createdTransactionsIds.push(transactionId)
   }
 
-  return createdTransactions
+  return isLastSheet
 }
 
 function getFloatIfNumberValue(value) {
@@ -158,27 +183,64 @@ function getSheetCell(sheet, cellName, row, type = 'v') {
   return getFloatIfNumberValue(cell[type])
 }
 
-const xls = require('xlsx')
-const createTransactionsFromSheets = async (fileName, accessToken) => {
-  token = accessToken || await login().then(({ data }) => data.login.access)
-  const accounts = await getAccounts()
-  const transactionTypes = await getTransactionTypes()
-  
-  const workbook = xls.readFile(`${__dirname}/../../files/${fileName}.xls`)
-  const sheetNames = workbook.SheetNames
-  const sheets = workbook.Sheets
-  
-  sheetNames.forEach((sheetName) => {
-    const [month, year] = sheetName.split(' ') 
-    if (/^\d{4,4}$/.test(year)) {
-      createTransactionsFromSheet({
-        sheet: sheets[sheetName],
-        accounts,
-        transactionTypes,
-        year,
-      })
-    } 
-  })
-}
+const getYearFromSheetName = sheetName => sheetName.split(' ')[1]
 
-module.exports = createTransactionsFromSheets
+const xls = require('xlsx')
+const fs = require('fs')
+const transactionsFromSheets = (function(){
+  const createTransactionsFromSheets = async (tempFilePath, accessToken, processId) => {
+    createTransactionsStatuses[processId] = {
+      notCreatedAccountsNames: [],
+      notCreatedTransactionsPayloads: [],
+      notCreatedTransactionsTypesNames: [],
+      createdTransactionsIds: [],
+    }
+    const currentStatus = createTransactionsStatuses[processId]
+    token = accessToken || await login().then(({ data }) => data.login.access)
+    const accounts = await getAccounts()
+    const transactionTypes = await getTransactionTypes()
+    
+    const workbook = xls.readFile(tempFilePath)
+    const sheetNames = workbook.SheetNames
+    const sheets = workbook.Sheets
+      
+    const filteredSheetNames = sheetNames.filter((sheetName) => /^\d{4,4}$/.test(getYearFromSheetName(sheetName)))
+    const lastSheetName = last(filteredSheetNames)
+    filteredSheetNames
+      .forEach(async (sheetName) => {
+        const year = getYearFromSheetName(sheetName)
+        const isDone = await createTransactionsFromSheet({
+          sheet: sheets[sheetName],
+          accounts,
+          transactionTypes,
+          year,
+          notCreatedAccountsNames: currentStatus.notCreatedAccountsNames,
+          notCreatedTransactionsPayloads: currentStatus.notCreatedTransactionsPayloads,
+          notCreatedTransactionsTypesNames: currentStatus.notCreatedTransactionsTypesNames,
+          createdTransactionsIds: currentStatus.createdTransactionsIds,
+          isLastSheet: sheetName === lastSheetName
+        })
+          .then(result => result)
+      
+        if (isDone) {
+          currentStatus.isDone = true
+          fs.unlink(tempFilePath)
+        }
+      })
+  }
+
+  const createTransactionsStatuses = {}
+  const getProcessStatus = processId => createTransactionsStatuses[processId]
+
+  const removeProcessStatus = (processId) => {
+    delete createTransactionsStatuses[processId]
+  }
+
+  return {
+    create: createTransactionsFromSheets,
+    getProcessStatus,
+    removeProcessStatus
+  }
+}())
+
+module.exports = transactionsFromSheets
