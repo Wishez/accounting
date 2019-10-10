@@ -30,9 +30,17 @@ const server = new ApolloServer({
 
 const app = express()
 const staticPath = '/static'
+
 app.use(staticPath, express.static(resolvePath('static')))
 app.use(morgan('dev'))
-app.use(cors())
+
+const shouldUseCors = false
+const whitelist = []
+app.use(cors({
+  origin: (origin, callback) => !shouldUseCors || whitelist.includes(origin) || !origin
+    ? callback(null, true)
+    : callback(new Error('Not allowed by CORS')),
+}))
 app.use(cookieParser())
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: false }))
