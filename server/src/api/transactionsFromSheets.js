@@ -65,10 +65,7 @@ const getCreatedTransactionTypeId = async (transactionTypeName, items) => {
     mutation: createTransactionTypeMutation,
     requestName: 'createTransactionType',
     variables: {
-      payload: {
-        name: transactionTypeName,
-        slug: transliteText(transactionTypeName.replace(/[\\\(\)]/g, '-'), '-'),
-      },
+      payload: getPayload(transactionTypeName),
     },
     context: getContext(),
   })
@@ -84,15 +81,29 @@ const getCreatedAccountId = async (accountName, items) => {
     mutation: createAccountMutation,
     requestName: 'createAccount',
     variables: {
-      payload: {
-        name: accountName,
-        slug: transliteText(accountName.replace(/[\\\(\)]/g, '-'), '-'),
-      },
+      payload: getPayload(accountName),
     },
     context: getContext(),
   })
   items.push(createdAccount)
   return get(createdAccount, 'id')
+}
+
+function getPayload(name) {
+  return {
+    name: name.replace(/\\/g, '-'),
+    slug: transliteText(name.replace(/[\D\W]/g, '-'), '-'),
+    color: getRandomColor(),
+  }
+}
+
+function getRandomColor() {
+  var letters = '0123456789ABCDEF';
+  var color = '#';
+  for (var i = 0; i < 6; i++) {
+    color += letters[Math.floor(Math.random() * 16)];
+  }
+  return color;
 }
 
 const mapValues = require('lodash/mapValues')
