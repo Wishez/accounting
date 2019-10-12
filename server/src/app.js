@@ -34,13 +34,7 @@ const staticPath = '/static'
 app.use(staticPath, express.static(resolvePath('static')))
 app.use(morgan('dev'))
 
-const shouldUseCors = false
-const whitelist = []
-app.use(cors({
-  origin: (origin, callback) => !shouldUseCors || whitelist.includes(origin) || !origin
-    ? callback(null, true)
-    : callback(new Error('Not allowed by CORS')),
-}))
+app.use(cors())
 app.use(cookieParser())
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: false }))
@@ -52,7 +46,7 @@ const excelParserRoutes = require('./routes/excelParser')
 app.use('/api/excel', excelParserRoutes)
 
 const graphqlPath = '/api' 
-server.applyMiddleware({ app, path: graphqlPath })
+server.applyMiddleware({ app, path: graphqlPath, cors: true })
 
 
 const port = env.APP_PORT || 4002
