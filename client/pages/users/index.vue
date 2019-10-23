@@ -106,7 +106,7 @@ export default {
       query: getProfilesGql,
 
       update({ profiles }) {
-        const { isSuccess, data } = profiles || {}
+        const { isSuccess, data = [] } = profiles || {}
         data.forEach((user) => this.createUserPayloadIfNeeded(user.id, user))
         return isSuccess ? data : []
       },
