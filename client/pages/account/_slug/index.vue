@@ -40,7 +40,7 @@
           <h2>{{date | formatDate('DD MMMM YYYY')}}</h2>
 
           <div class="account-transactions-header">
-              <span>Тип транзакции</span>
+              <span class="head head_transaction-type">Тип транзакции</span>
               <span class="head head_category">Категория</span>
               <span class="head head_segment" >Сегмент категории</span>
               <span class="head head_transaction-object" >Объект</span>
@@ -51,7 +51,7 @@
           <ul class="account-transactions-list">
             <li v-for="(transaction, index) in transactions" :key="index + updateCount" class="account-transaction-item">
               <base-button class="account-transaction" :action="editTransaction(transaction)" unstyled>
-                <h3>{{transaction.type.name}}</h3>
+                <h3 class="row_transaction-type">{{transaction.type.name}}</h3>
                 <span>{{transaction.category}}</span>
                 <span>{{transaction.segment}}</span>
                 <span>{{transaction.transaction_object}}</span>
@@ -345,6 +345,20 @@ export default {
     @media (--until-tablet) {
       width: 100%;
     }
+  }
+}
+
+.head {
+  &_transaction-type {
+    padding-left: 0;
+    text-align: left;
+  }
+}
+
+.row {
+  &_transaction-type {
+    padding-left: 0;
+    text-align: left;
   }
 }
 
