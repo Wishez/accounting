@@ -1,8 +1,7 @@
 <template>
   <section v-if="isLoggedIn" class="container personal-room">
-    <h1>Профиль</h1>
-
     <form>
+      <h1>Профиль</h1>
       <p>Ваша роль: <strong>{{RolesMap[user.role]}}</strong></p>
       <p>Аккаунт создан: <strong>{{new Date(user.dateJoined) | formatDate('DD MMMM YYYYг.')}}</strong></p>
     </form>
