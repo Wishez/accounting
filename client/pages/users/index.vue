@@ -73,14 +73,14 @@
       <div ref="pagination" class="pagination litter"></div>
     </section>
 
-  <modal-container :isShown="$store.state.popups[userPopupName]" :onClose="refetchProfieles">
+    <modal-container :isShown="$store.state.popups[userPopupName]" :onClose="refetchProfieles">
       <user-form />
     </modal-container>
   </div>
-  <p v-else class="container">
-    У вас недостаточно прав для просмотра этой страницы
-  </p>
-
+  <section v-else class="container">
+    <h1>Ошибка доступа</h1>
+    <p>У вас недостаточно прав для просмотра этой страницы</p>
+  </section>
 </template>
 
 <script>
