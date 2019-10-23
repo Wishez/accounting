@@ -293,18 +293,22 @@ p {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  flex-grow: 1;
   border-radius: 2px;
   box-shadow: 0 0 10px rgba(#333, .5);
   background-color: white;
   border: 3px dashed $darkGray; 
 
   @media (--from-tablet) {
-    flex-basis: 33%;
+    flex-basis: calc(33% - 12.7px);
     margin: .5em;
+
+    &:nth-child(3n+3) {
+      flex-grow: 1;
+    }
   }
 
   @media (--until-tablet) {
+    flex-grow: 1;
     margin: .5em 0;
   }
 
