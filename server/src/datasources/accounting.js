@@ -33,8 +33,17 @@ class AccountingAPI extends RESTDataSource {
   static reduceAccount(account, isDeletedTransactionsShown) {
     if (!account.uuid) return null
 
+    const {
+      transactions: accountTransactions = [],
+      transactions_types = [],
+      is_deleted = false,
+      total_profit,
+      total_balance,
+      total_consumption,
+    } = account
+
     const transactions = []
-    account.transactions.forEach((transaction) => {
+    accountTransactions.forEach((transaction) => {
       const { is_deleted } = transaction
       if (isDeletedTransactionsShown === true ? is_deleted : !is_deleted) {
         transactions.push(AccountingAPI.reduceAccountTransaction(transaction))
@@ -43,6 +52,11 @@ class AccountingAPI extends RESTDataSource {
     return {
       ...AccountingAPI.reduceTransactionAccount(account),
       transactions: sortByDate(transactions, 'date'),
+      transactionsTypes: transactions_types.map(AccountingAPI.reduceTransactionType),
+      totalConsumption: total_consumption,
+      totalProfit: total_profit,
+      totalBalance: total_balance,
+      isDeleted: is_deleted,
     }
   }
 
@@ -156,13 +170,17 @@ class AccountingAPI extends RESTDataSource {
 
   static reduceTransactionAccount(account) {
     if (!account.uuid) return null
-    const { color, uuid, name, slug, is_deleted = false } = account
+    const {
+      color,
+      uuid,
+      name,
+      slug,
+    } = account
     return {
       id: uuid,
       slug,
       color,
       name,
-      isDeleted: is_deleted,
     }
   }
 
