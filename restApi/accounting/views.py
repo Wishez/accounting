@@ -1,5 +1,7 @@
 # -*- encoding: utf-8 -*-
 from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Expression
+from django.http import HttpResponse
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
@@ -11,7 +13,8 @@ from .serializers import \
     UserSerializer, \
     AccountSerializer, \
     TransactionTypeSerializer, \
-    TransactionDetailSerializer
+    TransactionDetailSerializer, \
+    AccountListSerializer
 
 class BaseAPIView(APIView):
     permission_classes = (IsAuthenticated,)
@@ -83,9 +86,9 @@ def make_serializer_list(request, Model, Serializer, PostSerializer=None):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 @api_view(['GET', 'POST'])
-@permission_classes([IsAuthenticated])
+# @permission_classes([IsAuthenticated])
 def account_list(request):
-    return make_serializer_list(request, Account, AccountSerializer)
+    return make_serializer_list(request, Account, AccountListSerializer, AccountSerializer)
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
@@ -184,3 +187,14 @@ def get_transaction_type_detail(request, slug):
 @permission_classes([IsAuthenticated])
 def transaction_type_detail(request, uuid):
     return make_serializer_detail_with_uuid(request, TransactionType, TransactionTypeSerializer, uuid)
+
+def test(request):
+    for a in Account.objects.all():
+        a.save()
+
+        for t in a.transactions.all():
+            tType = t.transactionType
+                if not a.transactions_types.filter(uuid=tType.uuid).exists():
+                    a.transactions_types.add(tType)
+
+    return HttpResponse('OK')

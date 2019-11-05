@@ -81,12 +81,31 @@ class AccountTransactionSerializer(serializers.ModelSerializer):
             'is_deleted',
         )
 
+class AccountListSerializer(serializers.ModelSerializer):
+    transactions_types = TransactionTypeSerializer(many=True, required=False)
+
+    class Meta:
+        model = Account
+        fields = (
+            'uuid',
+            'slug',
+            'name',
+            'transactions_types',
+            'total_profit',
+            'total_balance',
+            'total_consumption',
+            'color',
+            'is_deleted',
+        )
+
 updateTransactionsActions = {
     'remove': 'remove',
     'add': 'add',
 }
+
 class AccountSerializer(serializers.ModelSerializer):
     transactions = AccountTransactionSerializer(many=True, required=False)
+    transactions_types = TransactionTypeSerializer(many=True, required=False)
 
     class Meta:
         model = Account
@@ -95,6 +114,10 @@ class AccountSerializer(serializers.ModelSerializer):
             'slug',
             'name',
             'transactions',
+            'transactions_types',
+            'total_profit',
+            'total_balance',
+            'total_consumption',
             'color',
             'is_deleted',
         )
@@ -152,16 +175,20 @@ class TransactionDetailSerializer(serializers.ModelSerializer):
         account = Account.objects.get(uuid=accountId)
         if not account:
             raise Exception('Нет аккаунта с uuid: %s' % accountId)
+
         
         transactionTypeId = data.get('transactionTypeId')
         transactionType = TransactionType.objects.get(uuid=transactionTypeId)
         if not transactionType:
             raise Exception('Нет типа транзакции с uuid: %s' % transactionTypeId)
-        
+
         transaction = Transaction.objects.create(transactionType=transactionType, account=account, **validated_data)
 
         trnsactionDate = validated_data.get('date')
         transaction.order = len(Transaction.objects.filter(date=validated_data.get('date')))
+
+        if not account.transactions_types.filter(uuid=transactionType.uuid).exists():
+            account.transactions_types.add(transactionType)
 
         account.transactions.add(transaction)
         return transaction

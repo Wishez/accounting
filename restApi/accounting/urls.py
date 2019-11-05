@@ -15,6 +15,7 @@ urlpatterns = [
     path(r'profiles/', views.profile_list),
     path(r'profile/', views.CreateUserAPIView.as_view()),
     re_path(r'profile/(?P<uuid>[-\w]+)/$', views.profile_detail),
+    path(r'test/', views.test),
 ]
 
 # urlpatterns = format_suffix_patterns(urlpatterns)

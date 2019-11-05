@@ -16,7 +16,7 @@ const schemaString = gql`
     type AccountsResponse {
         isSuccess: Boolean!
         details: Details
-        data: [Account]!
+        data: [ListAccount]!
     }
 
     scalar Details
@@ -94,13 +94,29 @@ const schemaString = gql`
         viewer
     }
 
+    type ListAccount {
+        id: ID!
+        name: String!
+        slug: String!
+        transactionsTypes: [TransactionType]!
+        totalBalance: Float
+        totalProfit: Float
+        totalConsumption: Float
+        color: String
+        isDeleted: Boolean!
+    }
+
     type Account {
         id: ID!
         name: String!
         slug: String!
         transactions: [Transaction]!
+        transactionsTypes: [TransactionType]!
         color: String
         isDeleted: Boolean!
+        totalBalance: Float
+        totalProfit: Float
+        totalConsumption: Float
     }
 
     type TransactionAccount {

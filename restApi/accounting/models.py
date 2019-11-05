@@ -1,5 +1,7 @@
 # -*- encoding: utf-8 -*-
 from django.db import models
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
 from django.contrib.auth.models import (
     AbstractBaseUser, PermissionsMixin, BaseUserManager
 )
@@ -9,6 +11,7 @@ from django.urls import reverse
 import uuid as uuid_lib
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+import decimal
 
 class UserManager(BaseUserManager):
 	"""Define a model manager for User model with no username field."""
@@ -114,21 +117,21 @@ class Transaction(TimeStampedModel):
 	note = models.CharField(_('Примечание'), max_length=400, blank=True, null=True)
 	consumption = models.DecimalField(
 		_('Расход'),
-		max_digits=12,
+		max_digits=20,
 		decimal_places=2,
 		blank=True,
 		default=0.00
 	)
 	profit = models.DecimalField(
 		_('Приход'),
-		max_digits=12,
+		max_digits=20,
 		decimal_places=2,
 		blank=True,
 		default=0.00
 	)
 	balance = models.DecimalField(
 		_('Баланс/Сальдо'),
-		max_digits=12,
+		max_digits=20,
 		decimal_places=2,
 		blank=True,
 		default=0.00,
@@ -165,5 +168,51 @@ class Account(TimeStampedModel):
 		related_name="transactions_of_account",
 		blank=True,
 	)
+	total_consumption = models.DecimalField(
+		_('Расход'),
+		max_digits=20,
+		decimal_places=2,
+		blank=True,
+		default=0.00
+	)
+	total_profit = models.DecimalField(
+		_('Приход'),
+		max_digits=20,
+		decimal_places=2,
+		blank=True,
+		default=0.00
+	)
+	total_balance = models.DecimalField(
+		_('Баланс/Сальдо'),
+		max_digits=20,
+		decimal_places=2,
+		blank=True,
+		default=0.00,
+	)
+	transactions_types = models.ManyToManyField(
+		TransactionType,
+		verbose_name=_('Сущестующие типы транзакции'),
+		related_name="used_transactions_types_by_account",
+		blank=True,
+	)
 	color = models.CharField(_('Цвет'), max_length=9, blank=True, null=True)
 	is_deleted = models.BooleanField(_('Удалён?'), default=False)
+
+def to_fix(number):
+	return decimal.Decimal("{0:.2f}".format(number))
+
+@receiver(pre_save, sender=Account)
+def calc_account_transactions(sender, instance, **kwargs):
+	accountTransactions = instance.transactions.filter(is_deleted=False).order_by('date')
+	accountTransactionsLength = len(accountTransactions)
+
+	if accountTransactionsLength > 0:
+		total_profit = decimal.Decimal(0.0)
+		total_consumption = decimal.Decimal(0.0)
+		for accountTransaction in accountTransactions:
+			total_profit = total_profit + decimal.Decimal(accountTransaction.profit)
+			total_consumption = total_consumption + decimal.Decimal(accountTransaction.consumption)
+
+		instance.total_balance = to_fix(accountTransactions[accountTransactionsLength - 1].balance)
+		instance.total_profit = to_fix(total_profit)
+		instance.total_consumption = to_fix(total_consumption)
