@@ -30,7 +30,7 @@
     
       <ul v-if="$lodash.get(accounts, 'length', 0)" class="accounts">
         <li
-          v-for="({ id, name, transactions, slug, color }, index) in accounts
+          v-for="({ id, name, transactionsTypes, slug, color, totalBalance, totalProfit, totalConsumption }, index) in accounts
             .slice(0, pageNumber)
             .filter(({ name }) => name.indexOf(searchName) !== -1)"
           :key="index"
@@ -42,17 +42,22 @@
           </h2>
 
           <h3>Транзакции</h3> 
-          <ul v-if="$lodash.unionBy(transactions, 'type.id').length" class="zero-margin">
-            <li v-for="({ type }, index) in $lodash.unionBy(transactions, 'type.id')" :key="index" class="action-button">
-              <n-link :to="`/account/${slug}?type=${type.slug}`" class="transactionType">
-                  {{type.name}}
+          <ul v-if="transactionsTypes.length" class="zero-margin">
+            <li v-for="(transactionType, index) in transactionsTypes" :key="index" class="action-button">
+              <n-link :to="`/account/${slug}?type=${transactionType.slug}`" class="transactionType">
+                  {{transactionType.name}}
               </n-link>
             </li>
           </ul>
           <p v-else>Нет транзакций</p>
 
           <h3 class="statisticsHeading">Статистика</h3>
-          <base-statistics :transactions="transactions" isBalance/>
+          <base-statistics
+            :balance="totalBalance" 
+            :consumption="totalConsumption"
+            :profit="totalProfit"
+            isBalance
+          />
 
           <div v-if="isUserNotViewer" class="formButtonsContainer formButtonsContainer_topOffset">
             <base-button :action="editAccount({ id, name, slug })" class-name="action-button" unstyled>
@@ -103,7 +108,8 @@ export default {
         return accounts.isSuccess ? accounts.data : []
       },
 
-      prefetch: false,
+      // prefetch: false,
+     fetchPolicy: 'network-only', 
     }
   },
 
