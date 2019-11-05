@@ -1,48 +1,50 @@
 <template>
   <div :class="{
     'statistics-holder': true,
-    'statistics-holder_litter': hasLitter, 
-    'statistics-holder_form': !isReadOnly,
+    'statistics-holder_litter': hasLitter,
     'statistics-holder_fadeOut': isFadeOut,
+    'statistics-holder_wrap-fields': !isReadOnly,
     [className]: className, 
   }">
     <div class="statistics-container">
-      <label for="profit-statistics">Приход:</label>
+      <label for="profit-statistics" :class="modifier">Приход:</label>
       <input
-        v-model="profit"
+        v-model="totalProfit"
         v-money="money"
         id="profit-statistics"
-        class="profit"
+        :class="modifier"
         :readOnly="isReadOnly"
       />
     </div>
 
     <div class="statistics-container">
-      <label for="consumption-statistics">Расход:</label>
+      <label for="consumption-statistics" :class="modifier">Расход:</label>
       <input
-        v-model="consumption"
+        v-model="totalConsumption"
         v-money="money"
         id="consumption-statistics"
         class="consumption"
+        :class="modifier"
         :readOnly="isReadOnly"
       />
 
     </div>
 
     <div class="statistics-container">
-      <label for="balance-statistics">{{isBalance || accountBalance ? 'Баланс:' : 'Сальдо:'}}</label>
+      <label for="balance-statistics" :class="modifier">{{isBalance  ? 'Баланс:' : 'Сальдо:'}}</label>
       <input
-        v-model="balance"
+        v-model="totalBalance"
         v-money="money"
         id="balance-statistics"
         class="balance"
+        :class="modifier"
         :readOnly="isReadOnly"
       />
     </div>
 
     <span v-if="!isReadOnly" class="accept-action">
-      <base-button :action="calcBalance" unstyled>
-        <fa-icon :icon="['fas', 'check-circle']" />
+      <base-button class="action-button" :action="calcBalance" unstyled>
+        Расчитать сальдо
       </base-button>
     </span>
   </div>
@@ -55,29 +57,18 @@ import { map, pluck } from 'rxjs/operators'
 
 export default {
   name: "BaseStatistics",
-  computed: {
-    statistics() {
-      const { transactions } = this
-      const statistics = this.transactions.reduce((result, transaction) => {
-        const { balance = 0, profit = 0, consumption = 0 } = transaction
-
-        return {
-          profit: (Number(result.profit) + Number(profit)).toFixed(2),
-          consumption: (Number(result.consumption) + Number(consumption)).toFixed(2),
-        }
-      }, {
-        profit: 0.00,
-        consumption: 0.00,
-      })
-
-      statistics.balance = Number(this.$lodash.get(transactions, '0.balance', 0)).toFixed(2)
-      return statistics
-    },
-  },
   props: {
-    transactions: {
-      type: Array,
-      required: true,
+    profit: {
+      type: [Number, String],
+      default: 0,
+    },
+    consumption: {
+      type: [Number, String],
+      default: 0,
+    },
+    balance: {
+      type: [Number, String],
+      default: 0,
     },
     className: String,
     hasLitter: Boolean,
@@ -86,22 +77,26 @@ export default {
       default: true,
     },
     isFadeOut: Boolean,
-    accountBalance: [String, Number],
     isBalance: Boolean,
   },
+
+  computed: {
+    modifier() {
+      return this.isReadOnly ? '' : 'edit-mode'
+    }
+  },
+  
   data: () => ({
     money: moneyConfig,
-    profit: 0,
-    consumption: 0,
-    balance: 0,
+    totalConsumption: 0,
+    totalBalance: 0,
+    totalProfit: 0,
   }),
 
   mounted() {
-    ['profit', 'consumption'].forEach(key => {
-      this[key] = this.statistics[key]
-    })
-
-    this.balance = this.accountBalance || this.statistics.balance
+    this.totalConsumption = parseFloat(this.consumption).toFixed(2)
+    this.totalBalance = parseFloat(this.balance).toFixed(2)
+    this.totalProfit = parseFloat(this.profit).toFixed(2)
   },
 
   methods: {
@@ -109,13 +104,12 @@ export default {
       this.$emit(`${fieldName}-input`, value)
     },
 
-    subscribe(fieldName, callback) {
+    subscribe(fieldName, eventName) {
       return this.$watchAsObservable(fieldName).pipe(
         pluck('newValue'),
         map((value) => {
           const sum = this.$lodash.getNumberFromMoney(value)
-          this.emitEvent(fieldName, sum)
-          if (callback) callback(sum)
+          this.emitEvent(eventName, sum)
           return value
         })
       )
@@ -123,19 +117,19 @@ export default {
 
     calcBalance() {
       const { getNumberFromMoney } = this.$lodash
-      const consumption = getNumberFromMoney(this.consumption)
-      const profit = getNumberFromMoney(this.profit)
-      const balance = getNumberFromMoney(this.balance)
-      this.balance = (balance - consumption + profit).toFixed(2)
+      const consumption = getNumberFromMoney(this.totalConsumption)
+      const profit = getNumberFromMoney(this.totalProfit)
+      const balance = getNumberFromMoney(this.totalBalance)
+      this.totalBalance = (balance - consumption + profit).toFixed(2)
     }
   },
 
   subscriptions() {
     if (!this.$env.canUseDOM || this.isReadOnly) return {}
     return {
-      profit$: this.subscribe('profit'),
-      balance$: this.subscribe('balance'),
-      consumption$: this.subscribe('consumption'),
+      profit$: this.subscribe('totalProfit', 'profit'),
+      balance$: this.subscribe('totalBalance', 'balance'),
+      consumption$: this.subscribe('totalConsumption', 'consumption'),
     }
   },
 }
@@ -146,18 +140,16 @@ export default {
 @import '~/assets/styles/config/_easing.sass';
 
 .accept-action {
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-100%);
+  margin-top: -1.5em;
+  display: block;
+  margin-bottom: 2.8em;
+  font-size: .8em;
 
-
-  svg {
-    font-size: 2em;
-    transition: 200ms $standart;
-
+  button {
+    margin-right: 0;
     &:hover {
       color: $red;
+      border-bottom-color: $red;
     }
   }
 }
@@ -173,6 +165,13 @@ p {
   transition: opacity 200ms $standart;
   will-change: opacity;
   opacity: 1;
+
+  &_wrap-fields {
+
+    .statistics-container {
+      flex-wrap: wrap;
+    }
+  }
 
   &_fadeOut {
     opacity: 0;
@@ -194,21 +193,13 @@ p {
       color: inherit;
     }
   }
-
-  &_form {
-    margin-bottom: 1.5em;
-
-    .statistics-container {
-      margin-bottom: 1em;
-    }
-  }
 }
 
 label {
   white-space: nowrap;
 }
 
-input {
+input:not(.edit-mode) {
   padding: 0;
   padding-left: .25em;
   margin: 0;

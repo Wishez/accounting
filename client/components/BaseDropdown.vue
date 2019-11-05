@@ -1,6 +1,5 @@
 <template>
   <div
-    v-if="options"
     :class="{ 
       dropdown: true,
       fieldContainer_inline: isInline,
@@ -24,7 +23,13 @@
     />
     
     <transition name="fadeTranslateToBottom">
-      <div class="dropdown-content" v-if="isOptionsShown">
+      <div
+        :class="{
+          'dropdown-content': true,
+          'dropdown-content_with-label': labelText,
+        }"  
+        v-if="isOptionsShown"
+      >
         <div
           class="dropdown-item"
           v-for="(option, index) in filteredOptions"
@@ -71,12 +76,6 @@
         default: false,
         note: 'Disable the dropdown'
       },
-      maxItem: {
-        type: Number,
-        required: false,
-        default: 6,
-        note: 'Max items showing'
-      },
       defaultValue: Object,
       isInline: Boolean,
       filterValue: Object,
@@ -94,6 +93,7 @@
         selected: {},
       }
     },
+
     mounted() {
       const { name } = this.defaultValue || {}
       if (name) {
@@ -103,16 +103,19 @@
   
       this.$emit('selected', this.selected);
     },
+
     computed: {
       filteredOptions() {
-        const filtered = [];
+        const { searchFilter, options } = this
+        if (searchFilter.length < 1) return options
+
         const regOption = new RegExp(this.searchFilter, 'ig');
-        for (const option of this.options) {
-          if (this.searchFilter.length < 1 || option.name.match(regOption)){
-            if (filtered.length < this.maxItem) filtered.push(option);
-          }
+        const filteredOptions = [];
+        for (const option of options) {
+          if (option.name.match(regOption)) filteredOptions.push(option)
         }
-        return filtered;
+
+        return filteredOptions
       },
     },
 
@@ -125,12 +128,14 @@
       },
       showOptions(){
         if (!this.disabled) {
-          this.searchFilter = '';
+          this.searchFilter = ''
           this.isOptionsShown = true;
         }
       },
       exit() {
-        this.isOptionsShown = false;
+        this.searchFilter = this.selected.name
+        this.isOptionsShown = false
+        this.$forceUpdate()
       },
       // Selecting when pressing Enter  
       keyMonitor: function(event) {
@@ -140,11 +145,6 @@
     },
     watch: {
       searchFilter() {
-        if (this.filteredOptions.length === 0) {
-          this.selected = {};
-        } else {
-          this.selected = this.filteredOptions[0];
-        }
         this.$emit('filter', this.searchFilter);
       }
     }
@@ -172,14 +172,37 @@
   }
 
   .dropdown-content {
-    margin-top: -22px;
     width: 100%;
+    margin-top: 45px;
     max-height: 45px * 5;
     position: absolute;
+    top: 0;
+    left: 0;
     overflow-y: auto;
     background-color: #fff;
     border: 1px solid   #333;
     box-shadow: 0px 9px 15px 0px rgba(0, 0, 0, 0.2);
     z-index: 10;
+
+    @media (--from-tablet) {
+      
+      &::-webkit-scrollbar {
+        width: .5em
+      }
+  
+      &::-webkit-scrollbar-track {
+        background-color: transparent;
+      }
+  
+      &::-webkit-scrollbar-thumb {
+        background-color: #1F2229;
+        border-radius: 25px;
+      }
+    }
+
+
+    &_with-label {
+      margin-top: 66px;
+    }
   }
 </style>
