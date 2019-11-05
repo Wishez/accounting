@@ -246,6 +246,14 @@ query GetAccount($slug: String!, $isDeletedTransactionsShown: Boolean) {
       id
       name
       slug
+      totalBalance
+      totalConsumption
+      totalProfit
+      transactionsTypes {
+        id
+        name
+        slug
+      }
       transactions {
         ...TransactionTile
       }
@@ -310,17 +318,12 @@ query GetAccountRequest($isDeletedShown: Boolean) {
       name
       slug
       isDeleted
-      transactions {
-        profit
-        balance
-        consumption
-        order
-        date
-        type {
-          id
-          name
-          slug
-        }
+      totalBalance
+      totalConsumption
+      totalProfit
+      transactionsTypes {
+        name
+        slug
       }
     }
   }
