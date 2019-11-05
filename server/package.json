@@ -1,11 +1,11 @@
 {
   "name": "accounting-server",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Accounting for business. The graphql server.",
   "main": "app.js",
   "scripts": {
     "test": "jest",
-    "start": "node src/app.js"
+    "start": "nodemon src/app.js"
   },
   "dependencies": {
     "apollo-boost": "^0.4.4",
