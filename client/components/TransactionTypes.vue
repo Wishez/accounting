@@ -92,7 +92,6 @@ export default {
       },
 
       fetchPolicy: 'network-only',
-      prefetch: false,
     },
   },
 

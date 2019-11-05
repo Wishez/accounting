@@ -1,6 +1,6 @@
 export const moneyConfig = {
-  decimal: '.',
-  thousands: '.',
+  decimal: ',',
+  thousands: ' ',
   prefix: '',
   suffix: ' ₽',
   precision: 2,

@@ -84,7 +84,7 @@ export default {
       },
 
       skip() {
-        return Boolean(this.accountCategories)
+        return Boolean(this.accountTransactionTypes)
       },
 
       fetchPolicy: 'network-only',
@@ -92,12 +92,12 @@ export default {
   },
 
   props: {
-    accountCategories: Array,
+    accountTransactionsTypes: Array,
   },
 
   computed: {
     types() {
-      return this.accountCategories || this.transactionsTypes
+      return this.accountTransactionsTypes || this.transactionsTypes
     },
 
     queryType() {

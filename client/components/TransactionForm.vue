@@ -2,6 +2,7 @@
   <form v-if="isLoggedIn" @submit.prevent="onSubmit">
     <h1>Транзакция</h1>
     <base-dropdown
+      v-if="$lodash.get(transactionsTypes, 'length')"
       labelText="Тип"
       :options="transactionsTypes"
       @selected="validateSelection"
@@ -63,8 +64,10 @@
 
     <base-statistics
       :key="updateCount + 1"
-      :transactions="[transactionStatistics]"
       :isReadOnly="false"
+      :consumption="payload.consumption"
+      :profit="payload.profit"
+      :balance="payload.balance"
       @balance-input="value => setMoneyToPayload('balance', value)"
       @profit-input="value => setMoneyToPayload('profit', value)"
       @consumption-input="value => setMoneyToPayload('consumption', value)"
@@ -98,7 +101,8 @@ export default {
 
       update({ transactionsTypes = {} }) {
         return transactionsTypes.isSuccess ? transactionsTypes.data : []
-      }
+      },
+      fetchPolicy: 'network-only',
     },
   },
   computed: {
@@ -146,21 +150,16 @@ export default {
 
     defaultNameValue() {
       const { transactionTypeId } = this.payload
-      return this.transactionsTypes.find(({ id }) => id === transactionTypeId) || {}
+      return (this.transactionsTypes || []).find(({ id }) => id === transactionTypeId) || {}
     }
   },
   data() {
     return {
       isError: false,
       errorMessage: '',
-      transactionStatistics: {},
-      money: {
-        decimal: '.',
-        thousands: '.',
-        prefix: '',
-        suffix: ' ₽',
-        precision: 2,
-      },
+      profit: 0,
+      consumption: 0,
+      balance: 0,
       updateCount: 0,
       date: new Date(),
     }
@@ -169,7 +168,6 @@ export default {
   created() {
     this.date = this.payload.date
     this.setLastTransactionBalance()
-    this.transactionStatistics = this.$lodash.pick(this.payload, ['profit', 'consumption', 'balance'])
   },
 
   methods: {
@@ -184,30 +182,10 @@ export default {
     },
 
     setLastTransactionBalance() {
-      const currentTransactionTypeId = this.payload.transactionTypeId
-      if (!this.isEdit && currentTransactionTypeId) {
-        const { get, last } = this.$lodash
-        const transactions = get(this.transaction.categories.find(({ typeId }) => (typeId === currentTransactionTypeId)), 'transactions', [])
-
-        let items
-        if (transactions.length) {
-          const transactionsDated = transactions[this.payload.date]
-          if (transactionsDated) {
-            items = get(transactionsDated, 'items', [])
-          } else {
-            const lastTransactionsDated = last(Object.values(transactions)) || {}
-            items = get(lastTransactionsDated, 'items', [])
-          }
-        } else {
-          const lastCategory = last(Object.values(this.transaction.categories || {}))
-          const categoryTransactions = Object.values(get(lastCategory, 'transactions', {}))
-          const lastTransactionsDated = last(categoryTransactions)
-          items = get(lastTransactionsDated, 'items', [])
-        }
-
-        const balance = get(items, `${items.length - 1}.balance`, 0)
-        this.payload.balance = balance
-        this.transactionStatistics = {...this.$lodash.pick(this.payload, ['profit', 'consumption']), balance }
+      if (!this.isEdit) {
+        this.payload.balance = this.$lodash
+          .get(this, `transaction.categories.0.transactions.0.balance`, 0)
+          .toFixed(2)
         this.updateCount += 1
       }
     },

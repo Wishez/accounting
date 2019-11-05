@@ -23,15 +23,17 @@
         <base-statistics
           className="litter"
           :isFadeOut="isDeletedTransactionsShown"
-          hasLitter
+          :consumption="$lodash.get(account, 'totalConsumption')"
+          :profit="$lodash.get(account, 'totalProfit')"
+          :balance="$lodash.get(account, 'totalBalance')"
           :key="updateCount"
-          :transactions="this.statistics"
-          :accountBalance="accountBalance"
+          hasLitter
+          isBalance
         />
       </div>
 
       <div class="filter-holder">
-        <account-filter :accountCategories="accountCategories" @change="updateCategories" />
+        <account-filter :accountTransactionsTypes="$lodash.get(account, 'transactionsTypes', [])" @change="updateCategories" />
         <loader v-if="isUpdating || $apollo.queries.account.loading" />
       </div>
 
@@ -39,25 +41,29 @@
         <li v-for="({ date, name, transactions }, index) in categories.slice(0, pageNumber)" :key="index + updateCount" class="account-transactions-category litter">
           <h2>{{date | formatDate('DD MMMM YYYY')}}</h2>
 
-          <div class="account-transactions-header">
-              <span class="head head_transaction-type">Тип транзакции</span>
-              <span class="head head_category">Категория</span>
-              <span class="head head_segment" >Сегмент категории</span>
-              <span class="head head_transaction-object" >Объект</span>
-              <span class="head head_note">Примичание</span>
-              <span class="head head_statistics">Статистика</span>
+          <div class="account-transactions-header base-table-grid">
+              <span class="account-transaction-head">Тип транзакции</span>
+              <span class="account-transaction-head">Категория</span>
+              <span class="account-transaction-head" >Сегмент категории</span>
+              <span class="account-transaction-head" >Объект</span>
+              <span class="account-transaction-head">Примичание</span>
+              <span class="account-transaction-head">Приход</span>
+              <span class="account-transaction-head">Расход</span>
+              <span class="account-transaction-head">Сальдно</span>
           </div>
            
           <ul class="account-transactions-list">
             <li v-for="(transaction, index) in transactions" :key="index + updateCount" class="account-transaction-item">
-              <base-button class="account-transaction" :action="editTransaction(transaction)" unstyled>
+              <a class="account-transaction base-table-grid" @click="editTransaction(transaction)" >
                 <h3 class="row_transaction-type">{{transaction.type.name}}</h3>
                 <span>{{transaction.category}}</span>
                 <span>{{transaction.segment}}</span>
                 <span>{{transaction.transaction_object}}</span>
                 <span class="field field_note">{{transaction.note}}</span>
-                <span><base-statistics :transactions="[transaction]" /></span>
-              </base-button>
+                <span>{{transaction.profit | formatMoney}}</span>
+                <span>{{transaction.consumption | formatMoney}}</span>
+                <span>{{transaction.balance | formatMoney}}</span>
+              </a>
             </li>
           </ul>
         </li>
@@ -81,7 +87,7 @@
         </span>
       </p>
 
-      <p v-if="$apollo.queries.account.error || $apollo.queries.transactionType.error" class="error">
+      <p v-if="$apollo.queries.account.error" class="error">
         {{errorMessage}}
       </p>
 
@@ -97,7 +103,7 @@
 <script>
 import { mapState } from 'vuex'
 import { popupsNames } from '~/constants/popups'
-import { getAccountGql, getTransactionTypeGql } from '~/constants/gql'
+import { getAccountGql } from '~/constants/gql'
 import { setPagination } from '~/constants/pagination'
 import { ModalContainer, TransactionForm, TransactionTypes, AccountFilter } from '~/components'
 import { pluck, map } from 'rxjs/operators'
@@ -123,24 +129,6 @@ export default {
       fetchPolicy: 'network-only',
       prefetch: false,
     },
-
-    transactionType: {
-      query: getTransactionTypeGql,
-
-      variables() {
-        return {
-          slug: this.$route.query.type,
-        }
-      },
-
-      update({ transactionType = {} }) {
-        return transactionType.isSuccess ? transactionType.data : {}
-      },
-
-      skip() {
-        return !this.$route.query.type
-      },
-    },
   },
 
   components: {
@@ -157,8 +145,6 @@ export default {
     updateCount: 0,
     isUpdating: false,
     categories: [],
-    accountBalance: 0,
-    statistics: [],
     accountCategories: [],
     isDeletedTransactionsShown: false,
     shownTransactionsSinceDate: undefined,
@@ -172,10 +158,6 @@ export default {
 
     isUserNotViewer() {
       return !this.isUserViewer
-    },
-
-    transactionTypeId() {
-      return this.$lodash.get(this, 'transactionType.id')
     },
   },
 
@@ -197,7 +179,7 @@ export default {
 
       setTimeout(() => {
         const { get } = this.$lodash
-        const { transactionTypeId, account = {} } = this
+        const { account = {} } = this
         const { sinceDate, untilDate, filterType } = this
         const { id: filterTypeId } = filterType
         const hasRangePeriod = sinceDate && untilDate
@@ -223,8 +205,7 @@ export default {
 
         const { transactions = [] } = account
         const lastTransaction = transactions[0]
-        
-        this.accountBalance = Number(get(lastTransaction, 'balance', 0)).toFixed(2)
+
         this.accountCategories = Object.values(transactions.reduce((result, { type }) => {
           const { name, id, slug } = type
           return {
@@ -238,12 +219,10 @@ export default {
         }, {}))
 
         if (categories.length) {
-          this.setStatistics(categories)
           this.setPeriod(categories)
         } else {
           this.shownTransactionsSinceDate = undefined
           this.shownTransactionsUntilDate = undefined
-          this.statistics = []
         }
 
         this.categories = categories
@@ -256,10 +235,6 @@ export default {
       const { last, get } = this.$lodash
       this.shownTransactionsSinceDate = get(last(categories), 'date')
       this.shownTransactionsUntilDate = get(categories, '0.date')
-    },
-
-    setStatistics(categories) {
-      this.statistics = this.account.transactions
     },
 
     showError(e) {
@@ -280,12 +255,8 @@ export default {
       this.$store.dispatch('popups/openPopup', popupsNames.TRANSACTION)
     },
 
-    openTransactionTypePopup() {
-      this.$store.dispatch('popups/openPopup', popupsNames.TRANSACTION_TYPE)
-    },
-
     editTransaction(transaction) {
-      return () => this.isUserNotViewer && this.openTransactionPopup(transaction)
+      this.isUserNotViewer && this.openTransactionPopup(transaction)
     },
   },
 
@@ -348,68 +319,22 @@ export default {
   }
 }
 
-.head {
-  &_transaction-type {
-    padding-left: 0;
-    text-align: left;
-  }
-}
-
-.row {
-  &_transaction-type {
-    padding-left: 0;
-    text-align: left;
-  }
+.account-transaction-head {
+  color: #979797;
+  font-weight: bold;
+  align-items: flex-end;
 }
 
 .account-transactions-header {
-  display: flex;
-
-  @media (--until-tablet) {
-    flex-wrap: wrap;
-  }
 
   > * {
-    margin: 0;
-    padding: 0 .75em 1em;
-    display: flex;
-    align-items: flex-end;
-    color: #979797;
-    font-weight: bold;
-    border: 1px solid $darkGray;
-    border-top-width: 0;
-    border-left-width: 0;
 
     @media (--from-tablet) {
-      width: (100% / 6);
       padding: 0 .75em 1em;
     }
 
     @media (--until-tablet) {
-      max-width: 50%;
-      width: 100%;
       padding: .75em .75em .85em;
-    }
-
-    &:first-child, &:nth-child(3), &:nth-child(5) {
-
-      @media (--until-tablet) {
-        border-left-width: 1px;
-      }
-    }
-
-    &:first-child, &:nth-child(2) {
-
-      @media (--until-tablet) {
-        border-top-width: 1px;
-      }
-    }
-
-    &:last-child {
-      @media (--from-tablet) {
-        border-right-width: 0;
-        min-width: 220px;
-      }
     }
   }
 }
@@ -462,5 +387,9 @@ export default {
     font-weight: bold;
     text-align: left;
   }
+}
+
+.row_transaction-type {
+  font-size: 16px;
 }
 </style>

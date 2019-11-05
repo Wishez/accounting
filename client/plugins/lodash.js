@@ -10,7 +10,6 @@ import last from 'lodash/last'
 import mapValues from 'lodash/mapValues'
 import upperFirst from 'lodash/upperFirst'
 import cyrillicToTranslit from 'cyrillic-to-translit-js'
-import { moneyConfig } from '~/constants/config'
 
 const getHexFromHsl = (h, s, l) => {
   h /= 360;
@@ -100,10 +99,9 @@ function changeColorLightness(col, amt) {
 }
 
 const getNumberFromMoney = value => {
-  const withoutSuffix = String(value).replace(moneyConfig.suffix, '')
-  const intValue = withoutSuffix.slice(0, -3).replace(/\./g, '')
-  const sum = `${intValue}.${withoutSuffix.slice(-2)}`
-  return Number(sum)
+  const withReplacedSuffix = String(value).replace(',', '.')
+  const cleanValue = withReplacedSuffix.replace(/[^\d\.]/g, '')
+  return Number(parseFloat(cleanValue).toFixed(2))
 }
 
 const translitCompiler = cyrillicToTranslit()
