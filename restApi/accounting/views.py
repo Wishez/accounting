@@ -191,10 +191,9 @@ def transaction_type_detail(request, uuid):
 def test(request):
     for a in Account.objects.all():
         a.save()
-
         for t in a.transactions.all():
             tType = t.transactionType
-                if not a.transactions_types.filter(uuid=tType.uuid).exists():
-                    a.transactions_types.add(tType)
+            if not a.transactions_types.filter(uuid=tType.uuid).exists():
+                a.transactions_types.add(tType)
 
-    return HttpResponse('OK')
+    return HttpResponse('SUCCESS')
