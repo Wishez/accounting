@@ -117,10 +117,11 @@ export default {
 
     calcBalance() {
       const { getNumberFromMoney } = this.$lodash
-      const consumption = getNumberFromMoney(this.totalConsumption)
+      const consumption = getNumberFromMoney(this.totalConsumption) 
       const profit = getNumberFromMoney(this.totalProfit)
       const balance = getNumberFromMoney(this.totalBalance)
-      this.totalBalance = (balance - consumption + profit).toFixed(2)
+      const isNegative = this.totalBalance[0] === '-'
+      this.totalBalance = ((isNegative ? -balance : balance) - Math.abs(consumption) + Math.abs(profit)).toFixed(2)
     }
   },
 

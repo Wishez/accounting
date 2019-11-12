@@ -60,9 +60,9 @@
                 <span>{{transaction.segment}}</span>
                 <span>{{transaction.transaction_object}}</span>
                 <span class="field field_note">{{transaction.note}}</span>
-                <span>{{transaction.profit | formatMoney}}</span>
-                <span>{{transaction.consumption | formatMoney}}</span>
-                <span>{{transaction.balance | formatMoney}}</span>
+                <span class="field_no-wrap">{{transaction.profit | formatMoney}}</span>
+                <span class="field_no-wrap">{{transaction.consumption | formatMoney}}</span>
+                <span class="field_no-wrap">{{transaction.balance | formatMoney}}</span>
               </a>
             </li>
           </ul>
@@ -386,6 +386,10 @@ export default {
     font-size: 13px;
     font-weight: bold;
     text-align: left;
+  }
+
+  &_no-wrap {
+    white-space: nowrap;
   }
 }
 
