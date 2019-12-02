@@ -33,7 +33,8 @@
       </p>
       <p v-else-if="isCreateTransactionsFailed" class="zero-margin">Во время создания транзакций что-то пошло не так.</p>
       <ul v-else-if="transactionsCreateStatus" class="zero-margin">
-        <li v-if="transactionsCreateStatus.isDone">
+        <li v-if="transactionsCreateStatus.isDone" class="transaction-done">
+          Операция завершена. 
           <base-button :action="refreshPage" class="action-button" unstyled>Обновить страницу</base-button>
         </li>
         <li>
@@ -58,7 +59,7 @@
         </base-button>
       </li>
     </ul>
-    <p v-else-if="!$apollo.queries.transactionsTypes.loading">Нет {{isDeletedShown ? 'удалённых' : 'созданных'}} типов</p>
+    <p v-else-if="!$apollo.queries.transactionsTypes.loading" class="litter">Нет {{isDeletedShown ? 'удалённых' : 'созданных'}} типов</p>
 
     <modal-container :onClose="refetchTransactionTypes" :isShown="$store.state.popups[transactionTypePopupName]">
       <transaction-type-form />
@@ -150,6 +151,10 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.transaction-done {
+  margin-bottom: 9px;
+}
+
 .transaction-types-actions-holder {
   position: relative;
 }
