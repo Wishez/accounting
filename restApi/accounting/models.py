@@ -1,7 +1,5 @@
 # -*- encoding: utf-8 -*-
 from django.db import models
-from django.db.models.signals import pre_save
-from django.dispatch import receiver
 from django.contrib.auth.models import (
     AbstractBaseUser, PermissionsMixin, BaseUserManager
 )
@@ -11,7 +9,6 @@ from django.urls import reverse
 import uuid as uuid_lib
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-import decimal
 
 class UserManager(BaseUserManager):
 	"""Define a model manager for User model with no username field."""
@@ -103,7 +100,6 @@ class Transaction(TimeStampedModel):
 		default=uuid_lib.uuid4,
 		editable=True
 	)
-	# slug = models.SlugField(_('URL'), max_length=50, unique=True)
 	transactionType = models.ForeignKey(
 		TransactionType,
 		verbose_name=_("Транзакции счёта"),
@@ -197,22 +193,3 @@ class Account(TimeStampedModel):
 	)
 	color = models.CharField(_('Цвет'), max_length=9, blank=True, null=True)
 	is_deleted = models.BooleanField(_('Удалён?'), default=False)
-
-def to_fix(number):
-	return decimal.Decimal("{0:.2f}".format(number))
-
-@receiver(pre_save, sender=Account)
-def calc_account_transactions(sender, instance, **kwargs):
-	accountTransactions = instance.transactions.filter(is_deleted=False).order_by('date')
-	accountTransactionsLength = len(accountTransactions)
-
-	if accountTransactionsLength > 0:
-		total_profit = decimal.Decimal(0.0)
-		total_consumption = decimal.Decimal(0.0)
-		for accountTransaction in accountTransactions:
-			total_profit = total_profit + decimal.Decimal(accountTransaction.profit)
-			total_consumption = total_consumption + decimal.Decimal(accountTransaction.consumption)
-
-		instance.total_balance = to_fix(accountTransactions[accountTransactionsLength - 1].balance)
-		instance.total_profit = to_fix(total_profit)
-		instance.total_consumption = to_fix(total_consumption)
