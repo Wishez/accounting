@@ -1,5 +1,5 @@
 <template>
-  <form v-if="isLoggedIn" @submit.prevent="onSubmit">
+  <form v-if="isLoggedIn" @submit.prevent="onSubmit" class="transaction-form">
     <h1>Транзакция</h1>
     <base-dropdown
       v-if="$lodash.get(transactionsTypes, 'length')"
@@ -12,22 +12,24 @@
       placeholder="Выберете тип"
     />
 
-    <label for="date" id="dateLabel">
-      Дата проведения транзакции
-    </label>
-    <VueDatePicker
-      v-model="date"
-      id="date"
-      name="date"
-      format="DD.MM.YYYY"
-      formatOutput="YYYY-MM-DD"
-      color="#de1f24"
-      buttonCancel="Отмена"
-      placeholdr="24.07.2019"
-      @onChange="onChangeDate"
-      noHeader
-      fullscreenMobile
-    />
+    <div>
+      <label for="date" id="dateLabel">
+        Дата
+      </label>
+      <VueDatePicker
+        v-model="date"
+        id="date"
+        name="date"
+        format="DD.MM.YYYY"
+        formatOutput="YYYY-MM-DD"
+        color="#de1f24"
+        buttonCancel="Отмена"
+        placeholdr="24.07.2019"
+        @onChange="onChangeDate"
+        noHeader
+        fullscreenMobile
+      />
+    </div>
 
     <base-field
       v-model="payload.category"
@@ -280,7 +282,7 @@ export default {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 h1 {
   font-size: 32px;
 }

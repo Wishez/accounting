@@ -1,7 +1,8 @@
 <template>
   <transition
     name="fading"
-    appear>
+    appear
+  >
     <div
       v-if="isShown"
       :class="`popup ${containerClass ? ' '+containerClass : ''}`"
@@ -133,7 +134,11 @@ export default {
   position: relative
 
   @media (--from-tablet)
-    width: 320px
+    &:not(&_full-width)
+      width: 320px
+
+    &_full-width
+      width: 100%
 
   @media (--until-tablet)
     width: 100%

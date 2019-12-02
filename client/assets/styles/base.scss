@@ -98,9 +98,13 @@ form {
 input {
   width: 100%;
   margin-bottom: 1.5em;
-  padding: 1em .5em .7em;
+  padding: 1em .5em .6em 0;
   font-size: 1em;
   background-color: transparent;
+
+  &[readonly] {
+    border-bottom-color: #638cad;
+  }
 }
 
 .datepicker-input.datepicker-input.datepicker-input input, input {
@@ -386,6 +390,7 @@ img {
   position: relative;
   margin-bottom: 1em;
   background-color: white;
+  border-radius: 6px;
 
   &_increased {
     @media (--from-tablet) {
@@ -511,4 +516,100 @@ img {
 
 .zero-margin {
   margin: 0;
+}
+
+.transaction-form {
+  max-width: none;
+  flex-wrap: wrap;
+  flex-direction: row;
+  justify-content: space-between;
+
+  h1 {
+    min-width: 100%;
+  }
+
+  > *:not(:first-child), .datepicker-container {
+    width: max-content !important;
+    
+  }
+
+  > *:not(:first-child):not(.statistics-holder) {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    margin-right: 18px;
+  }
+
+  label {
+    display: block;
+  }
+
+  .datepicker-input {
+    width: max-content !important;
+    flex-wrap: wrap;
+  }
+
+  .statistics-holder {
+    width: 100% !important;
+    margin: 0 auto;
+    padding: 18px 0 0;
+    display: flex;
+    justify-content: center;
+    border-top: 1px solid #c7c7c7;
+  }
+
+  .statistics-container {
+    flex-direction: column;
+    margin-right: 29px;
+
+    label {
+      align-self: flex-start;
+    }
+
+    &:nth-child(3), &:nth-child(1) {
+      position: relative;
+
+      &::after {
+        position: absolute;
+        bottom: 25px;
+        font-size: 28px;
+      }
+    }
+
+    &:nth-child(3) {
+      order: -1;
+
+      &::after {
+        content: '+';
+        right: -22px;
+      }
+    }
+
+    &:nth-child(1) {
+      &::after {
+        content: '-';
+        right: -20px;
+      }
+    }
+  }
+
+  input {
+    width: 155px;
+  }
+
+  .formButtonsContainer {
+    flex-direction: row !important;
+    margin-left: auto;
+    margin-right: auto !important;
+    padding-top: 18px;
+  }
+
+  .error {
+    min-width: 100%;
+    margin: 0;
+  }
+}
+
+.transaction-form-popup {
+  max-width: 1127px;
 }

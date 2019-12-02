@@ -94,7 +94,7 @@
       <div ref="pagination" class="pagination litter"></div>
     </section>
 
-    <modal-container :onClose="refetchTransactions" :isShown="$store.state.popups[transactionPopupName]">
+  <modal-container :onClose="refetchTransactions" :isShown="$store.state.popups[transactionPopupName]" modifier="full-width" className="transaction-form-popup">
       <transaction-form />
     </modal-container>
   </div>
@@ -149,7 +149,7 @@ export default {
     isDeletedTransactionsShown: false,
     shownTransactionsSinceDate: undefined,
     shownTransactionsUntilDate: undefined,
-    pageNumber: 1,
+    pageNumber: 2,
   }),
 
   computed: {
@@ -175,7 +175,7 @@ export default {
   
     updateCategories() {
       this.isUpdating = true
-      this.pageNumber = 1
+      this.pageNumber = 2
 
       setTimeout(() => {
         const { get } = this.$lodash
@@ -202,7 +202,6 @@ export default {
             },
           }
         }, {}))
-
         const { transactions = [] } = account
         const lastTransaction = transactions[0]
 
@@ -309,8 +308,8 @@ export default {
     z-index: 2;
 
     @media (--from-tablet) {
-      width: calc(33.33% - 18px);
-      margin-right: 18px;
+      width: calc(33.33% - 13px);
+      margin-right: 13px;
     }
 
     @media (--until-tablet) {

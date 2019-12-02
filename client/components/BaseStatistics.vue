@@ -27,7 +27,6 @@
         :class="modifier"
         :readOnly="isReadOnly"
       />
-
     </div>
 
     <div class="statistics-container">
@@ -38,22 +37,16 @@
         id="balance-statistics"
         class="balance"
         :class="modifier"
-        :readOnly="isReadOnly"
+        readOnly
       />
     </div>
-
-    <span v-if="!isReadOnly" class="accept-action">
-      <base-button class="action-button" :action="calcBalance" unstyled>
-        Расчитать сальдо
-      </base-button>
-    </span>
   </div>
 </template>
 
 <script>
 import { moneyConfig } from '~/constants/config'
 import { fromEvent } from 'rxjs'
-import { map, pluck } from 'rxjs/operators'
+import { map, pluck, debounceTime } from 'rxjs/operators'
 
 export default {
   name: "BaseStatistics",
@@ -90,13 +83,19 @@ export default {
     money: moneyConfig,
     totalConsumption: 0,
     totalBalance: 0,
+    baseBalance: 0,
     totalProfit: 0,
   }),
 
   mounted() {
-    this.totalConsumption = parseFloat(this.consumption).toFixed(2)
-    this.totalBalance = parseFloat(this.balance).toFixed(2)
-    this.totalProfit = parseFloat(this.profit).toFixed(2)
+    const totalConsumption = parseFloat(this.consumption).toFixed(2)
+    const totalProfit = parseFloat(this.profit).toFixed(2) 
+    const totalBalance = parseFloat(this.balance).toFixed(2)
+
+    this.baseBalance = parseFloat(totalBalance) + parseFloat(totalConsumption) - parseFloat(totalProfit)
+    this.totalConsumption = totalConsumption
+    this.totalProfit = totalProfit
+    this.totalBalance = totalBalance
   },
 
   methods: {
@@ -106,10 +105,14 @@ export default {
 
     subscribe(fieldName, eventName) {
       return this.$watchAsObservable(fieldName).pipe(
+        debounceTime(1000),
         pluck('newValue'),
         map((value) => {
           const sum = this.$lodash.getNumberFromMoney(value)
-          this.emitEvent(eventName, sum)
+          const isNegative = value[0] === '-'
+          this.emitEvent(eventName, isNegative ? -sum : sum)
+
+          if (fieldName !== 'totalBalance') this.calcBalance()
           return value
         })
       )
@@ -117,11 +120,10 @@ export default {
 
     calcBalance() {
       const { getNumberFromMoney } = this.$lodash
-      const consumption = getNumberFromMoney(this.totalConsumption) 
-      const profit = getNumberFromMoney(this.totalProfit)
-      const balance = getNumberFromMoney(this.totalBalance)
-      const isNegative = this.totalBalance[0] === '-'
-      this.totalBalance = ((isNegative ? -balance : balance) - Math.abs(consumption) + Math.abs(profit)).toFixed(2)
+      const totalConsumption = getNumberFromMoney(this.totalConsumption) 
+      const totalProfit = getNumberFromMoney(this.totalProfit)
+
+      this.totalBalance = (this.baseBalance - Math.abs(totalConsumption) + Math.abs(totalProfit)).toFixed(2)
     }
   },
 
@@ -180,8 +182,8 @@ p {
 
   &_litter {
     padding: 1em;
-    width: calc(33.33% - 18px);
-    margin-left: 18px;
+    width: calc(33.33% - 13px);
+    margin-left: 13px;
     background-color: $darkGray;
     color: $white;
     z-index: 3;
