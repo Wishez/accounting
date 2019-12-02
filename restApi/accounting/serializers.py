@@ -3,6 +3,7 @@ from rest_framework import serializers
 from .models import User, Transaction, TransactionType, Account
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
+import decimal
 
 class TransactionTypeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -103,6 +104,28 @@ updateTransactionsActions = {
     'add': 'add',
 }
 
+class AccountSerializerPlain(serializers.ModelSerializer):
+
+    class Meta:
+        model = Account
+        fields = (
+            'uuid',
+            'slug',
+            'name',
+            'color',
+        )
+            
+    def create(self, validated_data):
+        account = Account.objects.create(**validated_data)
+
+        transactionsIds = self.request_data.get('transactionsIds', [])
+        if len(transactionsIds):
+            transactions = Transaction.objects.filter(uuid__in=transactionsIds)
+            account.transactions.set(transactions)
+            
+        return account
+
+
 class AccountSerializer(serializers.ModelSerializer):
     transactions = AccountTransactionSerializer(many=True, required=False)
     transactions_types = TransactionTypeSerializer(many=True, required=False)
@@ -122,17 +145,14 @@ class AccountSerializer(serializers.ModelSerializer):
             'is_deleted',
         )
     
-    def create(self, validated_data):
-        transactionsIds = self.request_data.get('transactionsIds', [])
-        transactions = Transaction.objects.filter(uuid__in=transactionsIds)
-        account = Account.objects.create(**validated_data)
-        account.transactions.set(transactions)
-        return account
-    
     def update(self, instance, validated_data):
         requestData = self.request_data
+
         transactionsIds = requestData.get('transactionsIds', [])
-        transactions = Transaction.objects.filter(uuid__in=transactionsIds)
+        transactions = []
+        if len(transactionsIds):
+            transactions = Transaction.objects.filter(uuid__in=transactionsIds)
+
         Account.objects.filter(uuid=instance.uuid).update(**validated_data)
         action = requestData.get('action')
         transactionsIdsLength = len(transactionsIds)
@@ -141,7 +161,29 @@ class AccountSerializer(serializers.ModelSerializer):
         elif transactionsIdsLength > 0:
             makeAction = getattr(instance.transactions, action)
             [makeAction(transaction) for transaction in transactions]
+
         return instance
+
+def to_fix(number):
+    return decimal.Decimal("{0:.2f}".format(number))
+
+def calc_account_transactions(instance):
+    accountTransactions = instance.transactions.filter(is_deleted=False).order_by('date')
+    accountTransactionsLength = len(accountTransactions)
+
+    if accountTransactionsLength > 0:
+        total_profit = decimal.Decimal(0.0)
+        total_consumption = decimal.Decimal(0.0)
+
+        for accountTransaction in accountTransactions:
+            total_profit = total_profit + decimal.Decimal(accountTransaction.profit)
+            total_consumption = total_consumption + decimal.Decimal(accountTransaction.consumption)
+
+        instance.total_balance = to_fix(accountTransactions[accountTransactionsLength - 1].balance)
+        instance.total_profit = to_fix(total_profit)
+        instance.total_consumption = to_fix(total_consumption)
+
+        instance.save()
 
 class TransactionDetailSerializer(serializers.ModelSerializer):
     transactionType = TransactionTypeSerializer(read_only=True)
@@ -191,10 +233,13 @@ class TransactionDetailSerializer(serializers.ModelSerializer):
             account.transactions_types.add(transactionType)
 
         account.transactions.add(transaction)
+        calc_account_transactions(account)
+
         return transaction
     
     def update(self, instance, validated_data):
         transaction = Transaction.objects.filter(uuid=instance.uuid)
+
         transactionTypeId = self.request_data.get('transactionTypeId')
         transactionType = None
         if transactionTypeId:
@@ -207,11 +252,10 @@ class TransactionDetailSerializer(serializers.ModelSerializer):
         transaction.update(**validated_data)
 
         date = validated_data.get('date')
-
         if date != instance.date:
-            transactionType = transactionType or instance.transactionType
-            order = len(Transaction.objects.filter(date=validated_data.get('date'), transactionType=transactionType))
+            order = len(Transaction.objects.filter(date=validated_data.get('date'))) + 1
             transaction.update(order=order)
-        
+
+        calc_account_transactions(instance.account)
 
         return transaction[0]

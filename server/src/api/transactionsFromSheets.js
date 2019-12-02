@@ -69,30 +69,33 @@ const getCreatedTransactionTypeId = async (transactionTypeName, items) => {
     },
     context: getContext(),
   })
-  items.push(createdTransactionType)
+
+  if (createdTransactionType) items.push(createdTransactionType)
   return get(createdTransactionType, 'id')
 }
 
 const getCreatedAccountId = async (accountName, items) => {
   const accountId = get(items.find(({ name }) => name === accountName), 'id')
   if (accountId) return accountId
-
+  
+  const payload = getPayload(accountName)
   const createdAccount = await client.mutate({
     mutation: createAccountMutation,
     requestName: 'createAccount',
     variables: {
-      payload: getPayload(accountName),
+      payload,
     },
     context: getContext(),
-  })
-  items.push(createdAccount)
+  }).catch(console.error)
+
+  if (createdAccount) items.push(createdAccount)
   return get(createdAccount, 'id')
 }
 
 function getPayload(name) {
   return {
-    name: name.replace(/\\/g, '-'),
-    slug: transliteText(name.replace(/[\D\W]/g, '-'), '-'),
+    name: name,
+    slug: transliteText(name.replace(/[^0-9A-Za-zа-яА-Я]/ig, ''), '-'),
     color: getRandomColor(),
   }
 }
@@ -129,7 +132,6 @@ const createTransactionsFromSheet = async (props) => {
   const lastCell = findLastKey(sheet, (value, key) => cellRegExp.test(key))
   
   const rowsQuantity = lastCell.replace(/\D/g, '')
-  const createdTransactions = []
   for (let row = 1; row <= rowsQuantity; row++) {
     const getCellFromRow = (cellName, key) => getSheetCell(sheet, cellName, row, key)
     const profit = getCellFromRow('profit')
@@ -169,12 +171,13 @@ const createTransactionsFromSheet = async (props) => {
     const transactionTypeId = await getCreatedTransactionTypeId(transactionTypeName, transactionTypes)
       .then(result => result)
       .catch(() => notCreatedTransactionsTypesNames.push(transactionTypeName))
-      if (!transactionTypeId) continue;
+    if (!transactionTypeId) continue;
 
     const transactionId = await getCreatedTransactionId(accountId, transactionTypeId, payload)
       .then(result => result)
       .catch(() => notCreatedTransactionsPayloads.push(payload))
     if (!transactionId) continue;
+
 
     createdTransactionsIds.push(transactionId)
   }

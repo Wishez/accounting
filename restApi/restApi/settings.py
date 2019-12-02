@@ -176,10 +176,9 @@ SIMPLE_JWT = {
 
 AUTH_USER_MODEL = "accounting.User" 
 
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
+
 REST_FRAMEWORK = {
-    # 'DEFAULT_PERMISSION_CLASSES': (
-    #     'rest_framework.permissions.IsAuthenticated',
-    # ),
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),

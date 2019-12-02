@@ -14,20 +14,26 @@ from .serializers import \
     AccountSerializer, \
     TransactionTypeSerializer, \
     TransactionDetailSerializer, \
-    AccountListSerializer
+    AccountListSerializer, \
+    AccountSerializerPlain
 
 class BaseAPIView(APIView):
     permission_classes = (IsAuthenticated,)
 
-    def validate_request_properties(self, data):
-        return
+    def get_validate_response(self, data):
+        return {}
 
     def get(self, request):
-        return make_get_list_serializer(self.Model, self.GetSerializer)
+        models = self.Model.objects.all()
+        serializer = self.GetSerializer(models, many=True)
+        return Response(serializer.data)
 
     def post(self, request):
         data = request.data
-        self.validate_request_properties(data)
+        validate_response = self.get_validate_response(data)
+
+        if validate_response.get('data'):
+            return Response(**validate_response)
 
         payload = data.get('payload')
         serializer = self.PostSerializer(data=payload)
@@ -41,11 +47,16 @@ class TransactionAPIView(BaseAPIView):
     PostSerializer = TransactionDetailSerializer
     Model = Transaction
 
-    def validate_request_properties(self, transaction):
+    def get_validate_response(self, transaction):
+        response = { 'status': None, 'data': None }
         if not transaction.get('transactionTypeId'):
-            return Response('transactionTypeId не может быть пустым!', status=status.HTTP_400_BAD_REQUEST)
+            response['status'] = status=status.HTTP_400_BAD_REQUEST
+            response['data'] = 'transactionTypeId не может быть пустым!'
         elif not transaction.get('accountId'):
-            return Response('accountId не может быть пустым!', status=status.HTTP_400_BAD_REQUEST)
+            response['status'] = status=status.HTTP_400_BAD_REQUEST
+            response['data'] = 'accountId не может быть пустым!'
+        
+        return response
 
 class CreateUserAPIView(BaseAPIView):
     PostSerializer = UserSerializer
@@ -63,37 +74,32 @@ class CreateUserAPIView(BaseAPIView):
         return Response(serializer.data)
 
 class AccountAPIView(BaseAPIView):
-    GetSerializer = AccountSerializer
-    PostSerializer = AccountSerializer
+    GetSerializer = AccountListSerializer
+    PostSerializer = AccountSerializerPlain
     Model = Account
 
-def make_get_list_serializer(Model, Serializer):
-    models = Model.objects.all()
-    serializer = Serializer(models, many=True)
-    return Response(serializer.data)
+    def get_validate_response(self, data):
+        slug = data.get('payload').get('slug')
+        response = { 'data': None }
+        accounts = self.Model.objects.filter(slug=slug)
+        if accounts.exists():
+            response['data'] = self.GetSerializer(accounts[0]).data
 
-def make_serializer_list(request, Model, Serializer, PostSerializer=None):
-    if request.method == 'GET':
-        return make_get_list_serializer(Model, Serializer)
+        return response
 
-    elif request.method == 'POST':
-        data = JSONParser().parse(request)
-        payload = data.get('payload')
-        serializer = Serializer(data=payload)
-        serializer.request_data = data
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+class TransactionTypeAPIView(BaseAPIView):
+    GetSerializer = TransactionTypeSerializer
+    PostSerializer = TransactionTypeSerializer
+    Model = TransactionType
 
-@api_view(['GET', 'POST'])
-# @permission_classes([IsAuthenticated])
-def account_list(request):
-    return make_serializer_list(request, Account, AccountListSerializer, AccountSerializer)
+    def get_validate_response(self, data):
+        slug = data.get('payload').get('slug')
+        response = { 'data': None }
+        transactions_types = self.Model.objects.filter(slug=slug)
+        if transactions_types.exists():
+            response['data'] = self.GetSerializer(transactions_types[0]).data
 
-@api_view(['GET', 'POST'])
-@permission_classes([IsAuthenticated])
-def transaction_type_list(request):
-    return make_serializer_list(request, TransactionType, TransactionTypeSerializer)
+        return response
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
