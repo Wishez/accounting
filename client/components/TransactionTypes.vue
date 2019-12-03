@@ -15,7 +15,7 @@
         :target="transactionsCreateTarget"
         @upload-started="() => isExcelParserProcessing = true"
         @upload-finished="({ data: processId }) => {
-          $store.commit('transactions/setCreateTransactionsLoadingState', true)
+          setCreateTransactionsLoadingState(true)
           makeTransactionsCreateStatusRequest(processId)
           isExcelParserProcessing = false
         }"
@@ -36,6 +36,9 @@
         <li v-if="transactionsCreateStatus.isDone" class="transaction-done">
           Операция завершена. 
           <base-button :action="refreshPage" class="action-button" unstyled>Обновить страницу</base-button>
+        </li>
+        <li v-else class="transaction-done">
+          Создание транзакий <strong>в процессе</strong>.
         </li>
         <li>
           Добавленно транзакций: {{transactionsCreateStatus.createdTransactionsIds.length}}
@@ -68,7 +71,7 @@
 </template>
 
 <script>
-import { mapState, mapActions } from 'vuex'
+import { mapState, mapActions, mapMutations } from 'vuex'
 import { popupsNames } from '~/constants/popups'
 import { getTransactionsTypesGql } from '~/constants/gql'
 import { apiUrls } from '~/constants/apiUrls'
@@ -108,6 +111,14 @@ export default {
     ]),
   },
 
+  mounted() {
+    const { processId } = localStorage
+    if (processId) {
+      this.setCreateTransactionsLoadingState(true)
+      this.makeTransactionsCreateStatusRequest(processId)
+    }
+  },
+
   data: () => ({
     transactionTypePopupName,
     transactionsCreateTarget: apiUrls.transactionsCreate,
@@ -117,6 +128,7 @@ export default {
 
   methods: {
     ...mapActions('transactions', ['makeTransactionsCreateStatusRequest']),
+    ...mapMutations('transactions', ['setCreateTransactionsLoadingState']),
 
     toggleTransactionTypes() {
       this.isDeletedShown = !this.isDeletedShown

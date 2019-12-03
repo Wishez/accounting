@@ -25,6 +25,7 @@ export const mutations = {
 
 export const actions = {
   async makeTransactionsCreateStatusRequest({ commit, dispatch }, processId) {
+    localStorage.processId = processId
     const result = await axios.get(apiUrls.transactionCreateStatus, { params: { processId } })
       .then(({ data: getResponse }) => getResponse.data)
       .catch(() => commit('setTransactionsCreateFailed'))
@@ -33,6 +34,7 @@ export const actions = {
       commit('setTransactionsCreateStatus', result)
 
       if (!result.isDone) setTimeout(() => dispatch('makeTransactionsCreateStatusRequest', processId), 10000)
+      else localStorage.processId = ''
     }
   },
 }
