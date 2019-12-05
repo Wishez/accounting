@@ -249,6 +249,17 @@ class TransactionDetailSerializer(serializers.ModelSerializer):
 
             transaction.update(transactionType=transactionType)
 
+        newBalance = validated_data.get('balance')
+        oldBalance = instance.balance
+        if newBalance != None and newBalance != oldBalance:
+            accountTransactions = Transaction.objects.filter(id__in=instance.account.transactions.all()).order_by('date', 'order')
+            nextCreatedTransactions = accountTransactions[[t for t in accountTransactions].index(instance) + 1:]
+            lastBalance = newBalance
+            for accountTransaction in nextCreatedTransactions:
+                accountTransaction.balance = newBalance + accountTransaction.profit - accountTransaction.consumption
+                accountTransaction.save()
+                lastBalance = accountTransaction.balance
+
         transaction.update(**validated_data)
 
         date = validated_data.get('date')
