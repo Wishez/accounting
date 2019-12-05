@@ -43,7 +43,9 @@
         <li>
           Добавленно транзакций: {{transactionsCreateStatus.createdTransactionsIds.length}}
         </li>
-        <li v-if="transactionsCreateStatus.notCreatedTransactionsPayloads.length">
+
+        <!-- Эти строчки для дебага -->
+        <!-- <li v-if="transactionsCreateStatus.notCreatedTransactionsPayloads.length">
           Не получилось создать транзакций: {{transactionsCreateStatus.notCreatedTransactionsPayloads.length}}
         </li>
         <li v-if="transactionsCreateStatus.notCreatedAccountsNames.length">
@@ -51,7 +53,7 @@
         </li>
         <li v-if="transactionsCreateStatus.notCreatedTransactionsTypesNames.length">
           Не получилось создать типов транзакции: {{transactionsCreateStatus.notCreatedTransactionsTypesNames.length}}
-        </li>
+        </li> -->
       </ul>
     </div>
 
