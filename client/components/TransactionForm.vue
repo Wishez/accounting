@@ -94,7 +94,7 @@ import { mapState } from 'vuex'
 import { createTransactionGql, updateTransactionGql, getTransactionsTypesGql, deleteTransactionGql } from '~/constants/gql'
 import { popupsNames } from '~/constants/popups'
 import { pluck, map } from 'rxjs/operators';
-
+/*TODO доработать созадние первой транзакции*/
 export default {
   name: 'TransactionForm',
   apollo: {
@@ -130,10 +130,8 @@ export default {
         note = '',
         profit = 0.00,
         consumption = 0.00,
-        balance = 0.00,
         type = {},
         accountId,
-        order = 0,
         date = this.$lodash.formatDate(Date.now(), 'YYYY-MM-DD'),
       } = this.transaction
       return {
@@ -142,10 +140,9 @@ export default {
         note,
         profit,
         consumption,
-        balance,
         accountId,
-        order,
         date,
+        balance: this.getPreviousTransactionBalance(date, profit, consumption),
         transactionTypeId: this.$lodash.get(type, 'id', ''),
       }
     },
@@ -159,9 +156,6 @@ export default {
     return {
       isError: false,
       errorMessage: '',
-      profit: 0,
-      consumption: 0,
-      balance: 0,
       updateCount: 0,
       date: new Date(),
     }
@@ -169,27 +163,41 @@ export default {
 
   created() {
     this.date = this.payload.date
-    this.setLastTransactionBalance()
   },
 
   methods: {
     onChangeDate() {
       this.payload.date = this.date
-      this.setLastTransactionBalance()
+      this.setPreviousTransactionBalance()
     },
 
     validateSelection(selection) {
       this.payload.transactionTypeId = selection.id
-      this.setLastTransactionBalance()
     },
 
-    setLastTransactionBalance() {
-      if (!this.isEdit) {
-        this.payload.balance = this.$lodash
-          .get(this, `transaction.categories.0.transactions.0.balance`, 0)
-          .toFixed(2)
-        this.updateCount += 1
-      }
+    setPreviousTransactionBalance() {
+      const { date, profit, consumption } = this.payload
+      this.payload.balance = this.getPreviousTransactionBalance(date, profit, consumption)
+      this.updateCount += 1
+    },
+
+    getPreviousTransactionBalance(date, profit = 0.00, consumption = 0.00) {
+      const { categories, id } = this.transaction
+      const { get, formatDate, last } = this.$lodash
+      console.log('date', date)
+      const choosenDate = formatDate(date, 'x')
+      const nearestMonth = Object.assign([], categories)
+        .filter((t) => formatDate(t.date, 'x') <= choosenDate)
+        .sort((a, b) => (
+          (choosenDate - formatDate(a.date, 'x')) - (choosenDate - formatDate(b.date, 'x'))
+        ))[0]
+
+      const { transactions = [] } = nearestMonth || {}
+      const currenTransactionIndex = transactions.findIndex((transaction) => transaction.id === id)
+      let previousTransaction
+      if (currenTransactionIndex !== -1) previousTransaction = transactions[currenTransactionIndex + 1]
+
+      return (previousTransaction ? previousTransaction.balance : get(nearestMonth || last(categories), `transactions.0.balance`, 0.00)) + Math.abs(profit) - Math.abs(consumption)
     },
 
     setMoneyToPayload(fieldName, value) {
@@ -272,11 +280,6 @@ export default {
     
     setNumberToPayload(fieldName, value) {
       this.payload[fieldName] = sum
-    },
-    
-    calcDiferranceBalance(value, fieldName) {
-      if (Math.abs(value) === this.payload[fieldName]) return
-      this.balance = String((this.defaultBalance + value).toFixed(2))
     },
   },
 }

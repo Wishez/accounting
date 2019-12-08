@@ -9,7 +9,7 @@ const sortByDate = (items, dateFieldName) => {
 
   return items.sort((a, b) => {
     const differance = getTime(b, dateFieldName) - getTime(a, dateFieldName)
-    if (differance === 0) return a.order - b.order
+    if (differance === 0) return b.order - a.order
 
     return differance
   })

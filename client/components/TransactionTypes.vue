@@ -31,11 +31,14 @@
       <p v-if="isCreateTransactionsProcessing || !$lodash.get(transactionsCreateStatus, 'createdTransactionsIds.length')" class="zero-margin">
         В данный момент сервер занимается созданием транзакций. Это может занять какое-то время.
       </p>
-      <p v-else-if="isCreateTransactionsFailed" class="zero-margin">Во время создания транзакций что-то пошло не так.</p>
+      <p v-else-if="isCreateTransactionsFailed" class="zero-margin">
+        Во время создания транзакций что-то пошло не так.
+        <base-button :action="refreshPage" class="action-button" unstyled>Обновите страницу</base-button>
+      </p>
       <ul v-else-if="transactionsCreateStatus" class="zero-margin">
         <li v-if="transactionsCreateStatus.isDone" class="transaction-done">
-          Операция завершена. 
-          <base-button :action="refreshPage" class="action-button" unstyled>Обновить страницу</base-button>
+          <strong>Операция завершена.</strong>
+          <base-button :action="refreshPage" class="action-button" unstyled>Обновите страницу</base-button>
         </li>
         <li v-else class="transaction-done">
           Создание транзакий <strong>в процессе</strong>.

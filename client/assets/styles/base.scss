@@ -247,6 +247,8 @@ ul {
 
 
 .account-transaction-item  {
+  position: relative;
+
   @media (--until-tablet) {
 
     &:not(:first-child) {
@@ -308,11 +310,6 @@ ul {
 
   @media (--until-tablet) {
     flex-wrap: wrap;
-  }
-
-  &:hover, &:focus {
-    background-color: rgba($red, .1) !important;
-    outline: 0;
   }
 
   > * {
