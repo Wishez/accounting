@@ -185,6 +185,25 @@ def calc_account_transactions(instance):
 
         instance.save()
 
+
+def get_account_transactions_by_date(account, date):
+    return Transaction.objects.filter(id__in=account.transactions.all(), date=date)
+
+def get_ordered_account_transactions(account, orderFieldsNames, **kwargs):
+    return Transaction.objects.filter(id__in=account.transactions.all(), **kwargs).order_by(*orderFieldsNames)
+
+def change_next_created_transactions_balance(instance, balance):
+    accountTransactions = get_ordered_account_transactions(instance.account, ('date', 'order'))
+    if len(accountTransactions) <= 1:
+        return None
+
+    nextCreatedTransactions = accountTransactions[[t for t in accountTransactions].index(instance) + 1:]
+    lastBalance = balance
+    for accountTransaction in nextCreatedTransactions:
+        accountTransaction.balance = lastBalance + accountTransaction.profit - accountTransaction.consumption
+        accountTransaction.save()
+        lastBalance = accountTransaction.balance
+
 class TransactionDetailSerializer(serializers.ModelSerializer):
     transactionType = TransactionTypeSerializer(read_only=True)
     account = AccountSerializer(read_only=True)
@@ -224,15 +243,15 @@ class TransactionDetailSerializer(serializers.ModelSerializer):
         if not transactionType:
             raise Exception('Нет типа транзакции с uuid: %s' % transactionTypeId)
 
-        transaction = Transaction.objects.create(transactionType=transactionType, account=account, **validated_data)
-
-        trnsactionDate = validated_data.get('date')
-        transaction.order = len(Transaction.objects.filter(date=validated_data.get('date')))
+        transactionDate = validated_data.get('date')
+        order = len(get_account_transactions_by_date(account, transactionDate)) + 1
+        transaction = Transaction.objects.create(transactionType=transactionType, account=account, order=order, **validated_data)
 
         if not account.transactions_types.filter(uuid=transactionType.uuid).exists():
             account.transactions_types.add(transactionType)
 
         account.transactions.add(transaction)
+        change_next_created_transactions_balance(transaction, transaction.balance)
         calc_account_transactions(account)
 
         return transaction
@@ -252,21 +271,36 @@ class TransactionDetailSerializer(serializers.ModelSerializer):
         newBalance = validated_data.get('balance')
         oldBalance = instance.balance
         if newBalance != None and newBalance != oldBalance:
-            accountTransactions = Transaction.objects.filter(id__in=instance.account.transactions.all()).order_by('date', 'order')
-            nextCreatedTransactions = accountTransactions[[t for t in accountTransactions].index(instance) + 1:]
-            lastBalance = newBalance
-            for accountTransaction in nextCreatedTransactions:
-                accountTransaction.balance = newBalance + accountTransaction.profit - accountTransaction.consumption
-                accountTransaction.save()
-                lastBalance = accountTransaction.balance
+            change_next_created_transactions_balance(instance, newBalance)
 
         transaction.update(**validated_data)
 
         date = validated_data.get('date')
-        if date != instance.date:
-            order = len(Transaction.objects.filter(date=validated_data.get('date'))) + 1
+        order = validated_data.get('order')
+        account = instance.account
+        if order and date:
+            srotedTransactions = get_ordered_account_transactions(account, ('date', 'order'))
+            datedTransactions = get_ordered_account_transactions(account, ('date', 'order'), date=date).exclude(uuid=instance.uuid)
+            for t in datedTransactions:
+                nextTransactionOrder = t.order
+                if nextTransactionOrder >= order:
+                    t.order = nextTransactionOrder + 1
+                    t.save()
+            
+            previousTransaction = datedTransactions.filter(order=order - 1)[0]
+            previousTransactionIndex = [t for t in srotedTransactions].index(previousTransaction)
+            previousTransactionBalance = previousTransaction.balance
+            if previousTransactionIndex != 0:
+                beforePrviousTransactionBalance = srotedTransactions[previousTransactionIndex - 1]
+                previousTransactionBalance = beforePrviousTransactionBalance.balance + previousTransaction.profit - previousTransaction.consumption
+                previousTransaction.balance = previousTransactionBalance
+                previousTransaction.save()
+
+            change_next_created_transactions_balance(previousTransaction, previousTransactionBalance)
+        elif date != instance.date:
+            order = len(get_account_transactions_by_date(account, date)) + 1
             transaction.update(order=order)
 
-        calc_account_transactions(instance.account)
+        calc_account_transactions(account)
 
         return transaction[0]

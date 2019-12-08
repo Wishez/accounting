@@ -14,7 +14,7 @@
         </h1>
 
         <div v-if="isUserNotViewer" class="actions_near transactions-actions litter">
-          <base-button :action="openTransactionPopup" class="action-button" unstyled>Создать транзакцию</base-button>
+          <base-button :action="openTransactionPopup" class="action-button" :disabled="!Boolean($lodash.get(account, 'id'))" unstyled>Создать транзакцию</base-button>
           <base-button :action="toggleTransactions" class="action-button" unstyled>
             {{isDeletedTransactionsShown ? 'Действующие' : 'Удалённые'}} транзакиции
           </base-button>
@@ -51,10 +51,33 @@
               <span class="account-transaction-head">Расход</span>
               <span class="account-transaction-head">Сальдно</span>
           </div>
+
+          <loader v-if="isUpdating || $apollo.queries.account.loading" />
            
           <ul class="account-transactions-list">
-            <li v-for="(transaction, index) in transactions" :key="index + updateCount" class="account-transaction-item">
-              <a class="account-transaction base-table-grid" @click="editTransaction(transaction)" >
+            <li
+              v-for="(transaction, index) in transactions"
+              :key="index + updateCount"
+              class="account-transaction-item"
+            >
+              <div
+                class="drag-element"
+                :data-order="transaction.order"
+                :data-date="date"
+                :data-id="transaction.id"
+                @dragstart="memrizeDraggedTransactions"
+                @dragenter="calcOrdersForNextTransactions"
+                @dragend="sendRequestToChangeTransactionOrder"
+                @click="editTransaction(transaction)"
+                draggable
+              />
+
+              <a
+                :class="{
+                  'account-transaction base-table-grid': true,
+                  'account-transaction_dragged': $lodash.get(currentDraggedTransaction, 'id') === transaction.id,
+                }"
+              >
                 <h3 class="row_transaction-type">{{transaction.type.name}}</h3>
                 <span>{{transaction.category}}</span>
                 <span>{{transaction.segment}}</span>
@@ -64,6 +87,7 @@
                 <span class="field_no-wrap">{{transaction.consumption | formatMoney}}</span>
                 <span class="field_no-wrap">{{transaction.balance | formatMoney}}</span>
               </a>
+
             </li>
           </ul>
         </li>
@@ -107,6 +131,7 @@ import { getAccountGql } from '~/constants/gql'
 import { setPagination } from '~/constants/pagination'
 import { ModalContainer, TransactionForm, TransactionTypes, AccountFilter } from '~/components'
 import { pluck, map } from 'rxjs/operators'
+import { updateTransactionGql } from '~/constants/gql'
 
 const { TRANSACTION: transactionPopupName } = popupsNames
 export default {
@@ -145,11 +170,13 @@ export default {
     updateCount: 0,
     isUpdating: false,
     categories: [],
-    accountCategories: [],
     isDeletedTransactionsShown: false,
     shownTransactionsSinceDate: undefined,
     shownTransactionsUntilDate: undefined,
     pageNumber: 2,
+    currentDraggedTransaction: null,
+    lastOverlapedTransaction: null,
+    transactionsToChange: [],
   }),
 
   computed: {
@@ -175,14 +202,12 @@ export default {
   
     updateCategories() {
       this.isUpdating = true
-      this.pageNumber = 2
 
       setTimeout(() => {
         const { get } = this.$lodash
         const { account = {} } = this
         const { sinceDate, untilDate, filterType } = this
         const { id: filterTypeId } = filterType
-        const hasRangePeriod = sinceDate && untilDate
         const isDateInRange = this.$lodash.isDateInRange(untilDate, sinceDate)
         const categories = Object.values(get(account, 'transactions', []).reduce((result, transaction) => {
           const { category, type, date } = transaction
@@ -202,24 +227,9 @@ export default {
             },
           }
         }, {}))
-        const { transactions = [] } = account
-        const lastTransaction = transactions[0]
 
-        this.accountCategories = Object.values(transactions.reduce((result, { type }) => {
-          const { name, id, slug } = type
-          return {
-            ...result,
-            [id]: {
-              name,
-              id,
-              slug,
-            }
-          }
-        }, {}))
-
-        if (categories.length) {
-          this.setPeriod(categories)
-        } else {
+        if (categories.length) this.setPeriod(categories)
+        else {
           this.shownTransactionsSinceDate = undefined
           this.shownTransactionsUntilDate = undefined
         }
@@ -257,6 +267,61 @@ export default {
     editTransaction(transaction) {
       this.isUserNotViewer && this.openTransactionPopup(transaction)
     },
+
+    memrizeDraggedTransactions(event) {
+      const { date, target, order } = this.getTransactionElement(event.target)
+      this.currentDraggedTransaction = this.getTransactionFromCategories(date, order)
+    },
+
+    getTransactionFromCategories(date, order) {
+      return this.categories.find(category => category.date === date).transactions.find(transaction => transaction.order === order)
+    },
+
+    calcOrdersForNextTransactions(event) {
+      const element = this.getTransactionElement(event.target)
+      if (!element) return null
+
+      const { date, target, order } = element
+      this.lastOverlapedTransaction = this.getTransactionFromCategories(date, order)
+    },
+
+    async sendRequestToChangeTransactionOrder() {
+      const { lastOverlapedTransaction, currentDraggedTransaction } = this
+      const { id: uuid, date: draggedTransactionDate, order: draggedTransactionOrder } = currentDraggedTransaction
+      const { order, date } = this.lastOverlapedTransaction
+      if (!lastOverlapedTransaction || lastOverlapedTransaction.id === uuid || (date === draggedTransactionDate && order === draggedTransactionOrder - 1)) return null
+      this.isUpdating = true
+
+      const response = await this.$apollo.mutate({
+        mutation: updateTransactionGql,
+        variables: {
+          uuid,
+          payload: {
+            order: order + 1,
+            date,
+          },
+        },
+      }).then(({ data: putResponse }) => putResponse.updateTransaction)
+        .catch(console.error)
+      
+      const { isSuccess } = response || {}
+      if (isSuccess) {
+        this.refetchTransactions()
+      }
+      this.isUpdating = false
+      this.lastOverlapedTransaction = null
+    },
+
+    getTransactionElement(target) {
+      const { date, order } = target.dataset || {}
+      if (date && order) {
+        return { target, date, order: Number(order) }
+      }
+
+      const { parentElement } = target
+      if (!parentElement) return false
+      this.getTransactionElement(parentElement)
+    }
   },
 
   mounted() {
@@ -280,6 +345,23 @@ export default {
 
 <style lang="scss" scoped>
 @import '~/assets/styles/config/_colors.sass';
+
+.drag-element {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+
+  &:hover, &:focus {
+    + .account-transaction {
+      background-color: rgba($red, .1) !important;
+      outline: 0;
+    }
+  }
+}
+
+.account-transaction.account-transaction_dragged {
+  background-color: rgba($green, .1) !important;
+}
 
 .transactions-period {
   font-size: 16px;
