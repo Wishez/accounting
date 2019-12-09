@@ -37,7 +37,7 @@
         id="balance-statistics"
         class="balance"
         :class="modifier"
-        readOnly
+        :readOnly="!shouldEditBalance"
       />
     </div>
   </div>
@@ -71,6 +71,7 @@ export default {
     },
     isFadeOut: Boolean,
     isBalance: Boolean,
+    shouldEditBalance: Boolean,
   },
 
   computed: {
@@ -85,11 +86,15 @@ export default {
     totalBalance: 0,
     baseBalance: 0,
     totalProfit: 0,
+    lastConsumptionSum: 0,
+    lastProfitSum: 0,
   }),
 
   mounted() {
     const totalConsumption = parseFloat(this.consumption).toFixed(2)
+    this.lastConsumptionSum = totalConsumption
     const totalProfit = parseFloat(this.profit).toFixed(2) 
+    this.lastProfitSum = totalProfit
     const totalBalance = parseFloat(this.balance).toFixed(2)
 
     this.baseBalance = parseFloat(totalBalance) + parseFloat(totalConsumption) - parseFloat(totalProfit)
@@ -113,6 +118,7 @@ export default {
           this.emitEvent(eventName, isNegative ? -sum : sum)
 
           if (fieldName !== 'totalBalance') this.calcBalance()
+          else if (this.shouldEditBalance) this.baseBalance = sum + this.lastConsumptionSum - this.lastProfitSum
           return value
         })
       )
@@ -120,8 +126,10 @@ export default {
 
     calcBalance() {
       const { getNumberFromMoney } = this.$lodash
-      const totalConsumption = getNumberFromMoney(this.totalConsumption) 
+      const totalConsumption = getNumberFromMoney(this.totalConsumption)
+      this.lastConsumptionSum = totalConsumption
       const totalProfit = getNumberFromMoney(this.totalProfit)
+      this.lastProfitSum = totalProfit
 
       this.totalBalance = (this.baseBalance - Math.abs(totalConsumption) + Math.abs(totalProfit)).toFixed(2)
     }

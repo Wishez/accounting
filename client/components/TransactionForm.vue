@@ -70,6 +70,7 @@
       :consumption="payload.consumption"
       :profit="payload.profit"
       :balance="payload.balance"
+      :shouldEditBalance="transaction.isFirstTransaction"
       @balance-input="value => setMoneyToPayload('balance', value)"
       @profit-input="value => setMoneyToPayload('profit', value)"
       @consumption-input="value => setMoneyToPayload('consumption', value)"
@@ -94,7 +95,7 @@ import { mapState } from 'vuex'
 import { createTransactionGql, updateTransactionGql, getTransactionsTypesGql, deleteTransactionGql } from '~/constants/gql'
 import { popupsNames } from '~/constants/popups'
 import { pluck, map } from 'rxjs/operators';
-/*TODO доработать созадние первой транзакции*/
+
 export default {
   name: 'TransactionForm',
   apollo: {
@@ -133,6 +134,8 @@ export default {
         type = {},
         accountId,
         date = this.$lodash.formatDate(Date.now(), 'YYYY-MM-DD'),
+        isFirstTransaction,
+        balance = 0.00,
       } = this.transaction
       return {
         category,
@@ -142,7 +145,7 @@ export default {
         consumption,
         accountId,
         date,
-        balance: this.getPreviousTransactionBalance(date, profit, consumption),
+        balance: isFirstTransaction ? balance : this.getPreviousTransactionBalance(date, profit, consumption),
         transactionTypeId: this.$lodash.get(type, 'id', ''),
       }
     },
@@ -178,13 +181,13 @@ export default {
     setPreviousTransactionBalance() {
       const { date, profit, consumption } = this.payload
       this.payload.balance = this.getPreviousTransactionBalance(date, profit, consumption)
+
       this.updateCount += 1
     },
 
     getPreviousTransactionBalance(date, profit = 0.00, consumption = 0.00) {
       const { categories, id } = this.transaction
       const { get, formatDate, last } = this.$lodash
-      console.log('date', date)
       const choosenDate = formatDate(date, 'x')
       const nearestMonth = Object.assign([], categories)
         .filter((t) => formatDate(t.date, 'x') <= choosenDate)

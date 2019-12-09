@@ -253,13 +253,16 @@ export default {
     },
 
     openTransactionPopup(payload) {
+      const { categories } = this
+      const { last } = this.$lodash
       this.$store.commit('popups/setPopupPayload', {
         popupName: popupsNames.TRANSACTION,
         payload: {
           accountId: this.account.id,
-          categories: this.categories,
+          categories,
           ...payload,
-        }
+          isFirstTransaction: !categories.length || last(last(categories).transactions).id === payload.id,
+        },
       })
       this.$store.dispatch('popups/openPopup', popupsNames.TRANSACTION)
     },
