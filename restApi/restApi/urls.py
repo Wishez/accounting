@@ -27,7 +27,7 @@ from django.views.decorators.cache import cache_page
 
 
 urlpatterns = [
-    path('api/v1/', include('accounting.urls')),
+    path('api/', include('accounting.urls')),
     path('api/auth/verify/', cache_page(60 * 15)(TokenVerifyView.as_view()), name='token_verify'),
     path('api/auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/auth/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
