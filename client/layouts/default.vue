@@ -146,6 +146,7 @@ export default {
 }
 
 header {
+  margin-bottom: 50px;
   background-image: linear-gradient($red 15%, transparent 0);
 }
 

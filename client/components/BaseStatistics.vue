@@ -195,6 +195,7 @@ p {
     background-color: $darkGray;
     color: $white;
     z-index: 3;
+    margin-bottom: 1em !important;
 
     @media (--until-tablet) {
       width: 100%;

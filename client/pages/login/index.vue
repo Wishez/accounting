@@ -1,4 +1,4 @@
-<template>
+ <template>
   <section class="container login-page">
     <form v-if="!isLoggedIn" @submit.prevent="login">
       <h1>Авторизация</h1>
@@ -50,6 +50,7 @@ export default {
       this.isLoading = true
       window.localStorage.email = this.credentials.email
       try {
+        console.log(this.credentials)
         const response = await this.$apollo.mutate({
           mutation: authenticateUserGql,
           variables: this.credentials,
@@ -57,6 +58,7 @@ export default {
         .catch(() => this.handleError('Неудалось авторизоваться'))
         const email = this.$lodash.get(response, 'email')
         if (email) {
+          console.log(response, email)
           await this.$apolloHelpers.onLogin(response.access)
           await fetechUserProfile.call(this, email)
           this.$router.push('/')

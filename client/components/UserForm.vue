@@ -85,9 +85,7 @@
 <script>
 import { mapState } from 'vuex'
 import { createProfileGql, updateProfileGql, authenticateUserGql } from '~/constants/gql'
-import { popupsNames } from '~/constants/popups'
-import { roles, fetechUserProfile } from '~/constants/user'
-import { pluck, map } from 'rxjs/operators'
+import { roles } from '~/constants/user'
 
 export default {
   name: 'UserForm',
@@ -182,6 +180,7 @@ export default {
 
     async updateUser() {
       try {
+        console.log(this.payload)
         const response = await this.$apollo.mutate({
           mutation: updateProfileGql,
           variables: {
@@ -252,9 +251,12 @@ export default {
     },
 
     getFormattedNamePart(value, index) {
+      if (!value) return ''
+
       const name = this.$lodash.upperFirst(value.trim().split(' ')[0])
       this.fullName[index] = name
       this.payload.name = this.fullName.join(' ')
+      console.log('name', name)
       return name
     }
   },

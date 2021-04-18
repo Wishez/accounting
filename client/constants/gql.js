@@ -194,6 +194,7 @@ const transactionTile = gql`
       id
       name
       slug
+      color
     }
     category
     transaction_object

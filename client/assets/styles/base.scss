@@ -383,11 +383,15 @@ img {
 .litter {
   padding: 1em 1em 1.4em;
   margin: 0;
-  box-shadow: 0 0 10px rgba(#333, .5);
+  box-shadow: 0 0 25px rgba(#333, .2);
   position: relative;
   margin-bottom: 1em;
   background-color: white;
   border-radius: 6px;
+
+  &:last-child {
+    margin-bottom: 50px;
+  }
 
   &_increased {
     @media (--from-tablet) {

@@ -38,7 +38,7 @@
       </div>
 
       <ul v-if="categories.length" class="account-transactions-categories">
-        <li v-for="({ date, name, transactions }, index) in categories.slice(0, pageNumber)" :key="index + updateCount" class="account-transactions-category litter">
+        <li v-for="({ date, transactions }, index) in categories.slice(0, pageNumber)" :key="index + updateCount" class="account-transactions-category litter">
           <h2>{{date | formatDate('DD MMMM YYYY')}}</h2>
 
           <div class="account-transactions-header base-table-grid">
@@ -59,6 +59,9 @@
               v-for="(transaction, index) in transactions"
               :key="index + updateCount"
               class="account-transaction-item"
+              :style="{
+                background: `${transaction.type.color}11`,
+              }"
             >
               <div
                 class="drag-element"
