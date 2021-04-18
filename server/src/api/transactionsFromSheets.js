@@ -218,7 +218,7 @@ const transactionsFromSheets = (function(){
     const sheetNames = workbook.SheetNames
     const sheets = workbook.Sheets
       
-    const filteredSheetNames = sheetNames.filter((sheetName) => /^\d{4,4}$/.test(getYearFromSheetName(sheetName)))
+    const filteredSheetNames = sheetNames.filter((sheetName) => /^\d{2,4}$/.test(getYearFromSheetName(sheetName)))
     const lastSheetName = last(filteredSheetNames)
     filteredSheetNames
       .forEach(async (sheetName) => {
@@ -235,10 +235,13 @@ const transactionsFromSheets = (function(){
           isLastSheet: sheetName === lastSheetName
         })
           .then(result => result)
+          .catch((error) => console.error('Can\'t create transaction', error))
       
         if (isDone) {
           currentStatus.isDone = true
           fs.unlink(tempFilePath)
+            .then(() => console.log(`File ${tempFilePath} was removed`))
+            .catch(console.error)
         }
       })
   }
